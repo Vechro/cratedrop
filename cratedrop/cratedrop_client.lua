@@ -9,6 +9,23 @@ weaponList = {
 -- feel free to expand the weaponList, I can't be bothered to add everything there, format is as follows: ["chat command argument"] = "pickup model name"
 -- http://web.archive.org/web/20170909034953/http://gtaforums.com/topic/883160-dlc-weapons-pickup-hashes/
 
+-- Universal Menu Hooking
+AddEventHandler("menu:setup", function()
+	TriggerEvent("menu:registerModuleMenu", "Crate Drop", function(id)
+		local ammoAmounts = { 10, 20, 50, 100, 200, 500, 1000 }
+		for weaponLabel, weaponName in pairs(weaponList) do
+			print(weaponLabel)
+			TriggerEvent("menu:addModuleSubMenu", id, weaponLabel, function(id)
+				for _, ammoAmount in ipairs(ammoAmounts) do
+					TriggerEvent("menu:addModuleItem", id, "Ammo: " .. ammoAmount, nil, false, function()
+						TriggerEvent("Cratedrop:Execute", weaponName, ammoAmount)
+					end)
+				end
+			end, false)
+		end
+	end, false)
+end)
+
 RegisterCommand("drop", function(source,args,raw)
     if weaponList[args[1]] == nil then
         if tonumber(args[2]) == nil then
