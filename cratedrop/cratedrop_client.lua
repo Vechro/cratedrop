@@ -58,10 +58,10 @@ RegisterCommand("drop", function(source,args,raw)
             print("Cratedrop failed: weapon unrecognized, ammo count: " .. args[2])
         end
     elseif weaponList[args[1]] ~= nil and tonumber(args[2]) == nil then
-        TriggerEvent("Cratedrop:Execute", args[1], 250)
+        TriggerEvent("Cratedrop:Execute", weaponList[args[1]], 250)
         print("Cratedrop succeeded: weapon: " .. args[1] .. ", ammo count unrecognized, defaulting to 250")
     elseif weaponList[args[1]] ~= nil and tonumber(args[2]) ~= nil then
-        TriggerEvent("Cratedrop:Execute", args[1], tonumber(args[2]))
+        TriggerEvent("Cratedrop:Execute", weaponList[args[1]], tonumber(args[2]))
         print("Cratedrop succeeded: weapon: " .. args[1] .. ", ammo count: " .. args[2])
     end
 end, false)
@@ -153,7 +153,7 @@ AddEventHandler("Cratedrop:Execute", function(weapon, ammo)
         -- PlayEntityAnim(crateParachute, "P_cargo_chute_S_deploy", "P_cargo_chute_S", 1000.0, false, false, false, 0, 0) -- disabled since animations don't work
         -- ForceEntityAiAndAnimationUpdate(crateParachute) -- pointless if animations aren't working
 
-        local weaponInsideCrate = CreateAmbientPickup(GetHashKey(weaponList[weapon]), cx, cy, cz - 5, 0, ammo, GetHashKey("ex_prop_adv_case_sm"), true, true) -- we make the pickup, location doesn't matter too much, we're attaching it later
+        local weaponInsideCrate = CreateAmbientPickup(GetHashKey(weapon), cx, cy, cz - 5, 0, ammo, GetHashKey("ex_prop_adv_case_sm"), true, true) -- we make the pickup, location doesn't matter too much, we're attaching it later
         SetEntityInvincible(weaponInsideCrate, true) -- could be necessary
         SetActivateObjectPhysicsAsSoonAsItIsUnfrozen(weaponInsideCrate, true)
         ActivatePhysics(weaponInsideCrate)
