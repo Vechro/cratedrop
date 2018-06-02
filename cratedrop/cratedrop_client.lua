@@ -9,10 +9,10 @@ weaponList = {
 -- feel free to expand the weaponList, I can't be bothered to add everything there, format is as follows: ["chat command argument"] = "pickup model name"
 -- http://web.archive.org/web/20170909034953/http://gtaforums.com/topic/883160-dlc-weapons-pickup-hashes/
 
--- Universal Menu Hooking
+-- The next 15 lines add support for Scammer's Universal Menu, it can be removed if it causes issues
 AddEventHandler("menu:setup", function()
 	TriggerEvent("menu:registerModuleMenu", "Crate Drop", function(id)
-		local ammoAmounts = { 10, 20, 50, 100, 200, 500, 1000 }
+		local ammoAmounts = { 10, 20, 50, 100, 500, 1000, 9999 }
 		for weaponLabel, weaponName in pairs(weaponList) do
 			print(weaponLabel)
 			TriggerEvent("menu:addModuleSubMenu", id, weaponLabel, function(id)
