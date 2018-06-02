@@ -43,6 +43,7 @@ AddEventHandler("menu:setup", function()
 				for _, ammoAmount in ipairs(ammoAmounts) do
 					TriggerEvent("menu:addModuleItem", id, "Ammo: " .. ammoAmount, nil, false, function()
 						TriggerEvent("Cratedrop:Execute", weaponName, ammoAmount)
+						TriggerEvent("menu:hideMenu")
 					end)
 				end
 			end, false)
