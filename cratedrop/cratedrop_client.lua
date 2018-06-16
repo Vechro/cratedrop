@@ -128,7 +128,7 @@ AddEventHandler("Cratedrop:Execute", function(weapon, ammo)
         local playerHeading = GetEntityHeading(playerPed)
 
         local aircraft = CreateVehicle(GetHashKey("cuban800"), planeSpawn, playerHeading, true, true) -- spawn the plane
-        SetEntityHeading(aircraft, playerHeading) -- the plane spawns behind the plane facing the same direction as the player
+        SetEntityHeading(aircraft, playerHeading) -- the plane spawns behind the player facing the same direction as the player
         SetVehicleDoorsLocked(aircraft, 2) -- lock the doors because why not?
         SetEntityDynamic(aircraft, true)
         ActivatePhysics(aircraft)
@@ -162,11 +162,7 @@ AddEventHandler("Cratedrop:Execute", function(weapon, ammo)
         SetEntityAsNoLongerNeeded(pilot) 
         SetEntityAsNoLongerNeeded(aircraft)
 
-<<<<<<< HEAD
         local crateSpawn = vector3(GetOffsetFromEntityInWorldCoords(aircraft, 0.0, 0.0, -5.0))
-=======
-        local crateSpawn = vector3(GetOffsetFromEntityInWorldCoords(aircraft, 0, 0, -5))
->>>>>>> 2e27cebadc5c40a95cb233b9de2e4c406e6d559d
 
         local crate = CreateObject(GetHashKey("prop_box_wood02a_pu"), crateSpawn, true, true, true) -- a breakable crate to be spawned directly under the plane, probably could be spawned closer to the plane
         SetEntityLodDist(crate, 1000) -- so we can see it from the distance
@@ -175,11 +171,7 @@ AddEventHandler("Cratedrop:Execute", function(weapon, ammo)
         SetEntityVelocity(crate, 0.0, 0.0, -0.2) -- I think this makes the crate drop down, not sure if it's needed as many times in the script as I'm using
 
         parachute = CreateObject(GetHashKey("p_cargo_chute_s"), crateSpawn, true, true, true) -- create the parachute for the crate
-<<<<<<< HEAD
         SetEntityLodDist(parachute, 1000)
-=======
-        SetEntityLodDist(parachute, 1000) -- so we can see it from the distance
->>>>>>> 2e27cebadc5c40a95cb233b9de2e4c406e6d559d
         SetEntityVelocity(parachute, 0.0, 0.0, -0.2) -- I think this makes the crate drop down, not sure if it's needed as many times in the script as I'm using
         -- PlayEntityAnim(parachute, "P_cargo_chute_S_deploy", "P_cargo_chute_S", 1000.0, false, false, false, 0, 0) -- disabled since animations don't work
         -- ForceEntityAiAndAnimationUpdate(parachute) -- pointless if animations aren't working
