@@ -122,7 +122,7 @@ AddEventHandler("Cratedrop:Execute", function(weapon, ammo)
             Wait(0)
         end
 
-        local playerPed = GetPlayerPed(-1)
+        local playerPed = PlayerPedId()
         local dropsite = vector3(GetOffsetFromEntityInWorldCoords(playerPed, 0.0, 12.5, 200)) -- location where to drop the crate
         local planeSpawn = vector3(GetOffsetFromEntityInWorldCoords(playerPed, 0.0, -400.0, 500.0)) -- location for plane spawning, should replace it with a system that spawns where the player isn't looking
         local playerHeading = GetEntityHeading(playerPed)
@@ -145,14 +145,12 @@ AddEventHandler("Cratedrop:Execute", function(weapon, ammo)
         SetPedKeepTask(pilot, true)
         SetPlaneMinHeightAboveTerrain(aircraft, 50) -- the plane shouldn't dip below the defined altitude
         TaskVehicleDriveToCoord(pilot, aircraft, dropsite, 60.0, 0, GetHashKey("cuban800"), 262144, 15.0, -1.0); -- to the dropsite, could be replaced with sequencing
-
-        local hx, hy = table.unpack(GetEntityCoords(aircraft))
-        while not IsEntityDead(pilot) and not (((dropsite.x - 5) < hx) and (hx < (dropsite.x + 5)) and ((dropsite.y - 5) < hy) and (hy < (dropsite.y + 5))) do -- wait for when the plane reaches the coords ± 5
-            Wait(0)
-            hx, hy = table.unpack(GetEntityCoords(aircraft)) -- update plane coords for the loop
-            if IsEntityDead(pilot) then -- I think this will end the script if the pilot dies
-                do return end
-            end
+        local dropsite = vector2(dropsite.x, dropsite.y)
+        local planeLocation = vector2(GetEntityCoords(aircraft).x, GetEntityCoords(aircraft).y)
+        while not IsEntityDead(pilot) and #(planeLocation - dropsite) > 5.0 do -- wait for when the plane reaches the coords ± 5
+            Wait(50)
+            print(tostring(planeLocation - dropsite))
+            planeLocation = vector2(GetEntityCoords(aircraft).x, GetEntityCoords(aircraft).y) -- update plane coords for the loop
         end
 
         if IsEntityDead(pilot) == true then -- I think this will end the script if the pilot dies, no idea how to return works
