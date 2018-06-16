@@ -1,16 +1,31 @@
-weaponList = {
+local weaponList = {
+    ["pistol"] = "PICKUP_WEAPON_PISTOL",
+    ["combatpistol"] = "PICKUP_WEAPON_COMBATPISTOL",
     ["appistol"] = "PICKUP_WEAPON_APPISTOL",
+    ["pistol50"] = "PICKUP_WEAPON_PISTOL50",
+    ["snspistol"] = "PICKUP_WEAPON_SNSPISTOL",
+    ["vintagepistol"] = "PICKUP_WEAPON_VINTAGEPISTOL",
+    ["marksmanpistol"] = "PICKUP_WEAPON_MARKSMANPISTOL",
+    ["heavypistol"] = "PICKUP_WEAPON_HEAVYPISTOL",
+    ["heavyrevolver"] = "PICKUP_WEAPON_REVOLVER",
+    ["revolver"] = "PICKUP_WEAPON_REVOLVER",
+    ["doubleactionrevolver"] = "PICKUP_WEAPON_DOUBLEACTION",
     ["stungun"] = "PICKUP_WEAPON_STUNGUN",
+    ["flaregun"] = "PICKUP_WEAPON_FLAREGUN",
 
     ["microsmg"] = "PICKUP_WEAPON_MICROSMG",
     ["smg"] = "PICKUP_WEAPON_SMG",
+    ["assaultsmg"] = "PICKUP_WEAPON_ASSAULTSMG",
+    ["combatpdw"] = "PICKUP_WEAPON_COMBATPDW",
+    ["machinepistol"] = "PICKUP_WEAPON_MACHINEPISTOL",
+    ["minismg"] = "PICKUP_WEAPON_MINISMG",
 
-    ["gusenbergsweeper"] = "PICKUP_WEAPON_GUSENBERG",
     ["mg"] = "PICKUP_WEAPON_MG",
     ["combatmg"] = "PICKUP_WEAPON_COMBATMG",
+    ["gusenbergsweeper"] = "PICKUP_WEAPON_GUSENBERG",
 
     ["pumpshotgun"] = "PICKUP_WEAPON_PUMPSHOTGUN",
-    ["sawnoffshotgun"] = "PICKUP_WEAPON_SAWNOFFSHOTGUN",
+    ["sawedoffshotgun"] = "PICKUP_WEAPON_SAWNOFFSHOTGUN",
     ["assaultshotgun"] = "PICKUP_WEAPON_AUTOSHOTGUN",
     ["heavyshotgun"] = "PICKUP_WEAPON_HEAVYSHOTGUN",
     ["bullpupshotgun"] = "PICKUP_WEAPON_BULLPUPSHOTGUN",
@@ -18,8 +33,12 @@ weaponList = {
     ["doublebarrelshotgun"] = "PICKUP_WEAPON_DBSHOTGUN",
     ["musket"] = "PICKUP_WEAPON_MUSKET",
 
+    ["assaultrifle"] = "PICKUP_WEAPON_ASSAULTRIFLE",
+    ["carbinerifle"] = "PICKUP_WEAPON_CARBINERIFLE",
     ["advancedrifle"] = "PICKUP_WEAPON_ADVANCEDRIFLE",
     ["specialcarbine"] = "PICKUP_WEAPON_SPECIALCARBINE",
+    ["bullpuprifle"] = "PICKUP_WEAPON_BULLPUPRIFLE",
+    ["compactrifle"] = "PICKUP_WEAPON_COMPACTRIFLE",
 
     ["minigun"] = "PICKUP_WEAPON_MINIGUN",
     ["rpg"] = "PICKUP_WEAPON_RPG",
@@ -216,7 +235,7 @@ AddEventHandler("Cratedrop:Execute", function(weapon, ammo)
             SetModelAsNoLongerNeeded(GetHashKey(requiredModels[i]))
         end
 
-        RemoveWeaponAsset(GetHashKey("weapon_flare")) -- unload the flare
+        RemoveWeaponAsset(GetHashKey("weapon_flare"))
 
     end)
 end)
