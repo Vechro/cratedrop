@@ -145,7 +145,8 @@ AddEventHandler("Cratedrop:Execute", function(weapon, ammo)
         SetPedKeepTask(pilot, true)
         SetPlaneMinHeightAboveTerrain(aircraft, 50) -- the plane shouldn't dip below the defined altitude
         TaskVehicleDriveToCoord(pilot, aircraft, dropsite, 60.0, 0, GetHashKey("cuban800"), 262144, 15.0, -1.0); -- to the dropsite, could be replaced with sequencing
-        
+
+        local dropsite = vector2(dropsite.x, dropsite.y)
         local planeLocation = vector2(GetEntityCoords(aircraft).x, GetEntityCoords(aircraft).y)
         while not IsEntityDead(pilot) and #(planeLocation - dropsite) > 5.0 do -- wait for when the plane reaches the coords ± 5
             Wait(50)
@@ -161,21 +162,21 @@ AddEventHandler("Cratedrop:Execute", function(weapon, ammo)
         SetEntityAsNoLongerNeeded(pilot) 
         SetEntityAsNoLongerNeeded(aircraft)
 
-        local cx, cy, cz = table.unpack(GetEntityCoords(aircraft))
+        local crateSpawn = vector3(GetOffsetFromEntityInWorldCoords(aircraft, 0, 0, -5))
 
-        local crate = CreateObject(GetHashKey("prop_box_wood02a_pu"), cx, cy, cz - 5, true, true, true) -- a breakable crate to be spawned directly under the plane, probably could be spawned closer to the plane
+        local crate = CreateObject(GetHashKey("prop_box_wood02a_pu"), crateSpawn, true, true, true) -- a breakable crate to be spawned directly under the plane, probably could be spawned closer to the plane
         SetEntityLodDist(crate, 1000) -- so we can see it from the distance
         ActivatePhysics(crate)
         SetDamping(crate, 2, 0.1) -- no idea but Rockstar uses it
         SetEntityVelocity(crate, 0.0, 0.0, -0.2) -- I think this makes the crate drop down, not sure if it's needed as many times in the script as I'm using
 
-        parachute = CreateObject(GetHashKey("p_cargo_chute_s"), cx, cy, cz - 5, true, true, true) -- create the parachute for the crate
+        parachute = CreateObject(GetHashKey("p_cargo_chute_s"), crateSpawn, true, true, true) -- create the parachute for the crate
         SetEntityLodDist(parachute, 1000) -- so we can see it from the distance
         SetEntityVelocity(parachute, 0.0, 0.0, -0.2) -- I think this makes the crate drop down, not sure if it's needed as many times in the script as I'm using
         -- PlayEntityAnim(parachute, "P_cargo_chute_S_deploy", "P_cargo_chute_S", 1000.0, false, false, false, 0, 0) -- disabled since animations don't work
         -- ForceEntityAiAndAnimationUpdate(parachute) -- pointless if animations aren't working
 
-        local pickup = CreateAmbientPickup(GetHashKey(weapon), cx, cy, cz - 5, 0, ammo, GetHashKey("ex_prop_adv_case_sm"), true, true) -- we make the pickup, location doesn't matter too much, we're attaching it later
+        local pickup = CreateAmbientPickup(GetHashKey(weapon), crateSpawn, 0, ammo, GetHashKey("ex_prop_adv_case_sm"), true, true) -- we make the pickup, location doesn't matter too much, we're attaching it later
         ActivatePhysics(pickup)
         SetDamping(pickup, 2, 0.0245) -- no idea but Rockstar uses it
         SetEntityVelocity(pickup, 0.0, 0.0, -0.2) -- I think this makes the crate drop down, not sure if it's needed as many times in the script as I'm using
