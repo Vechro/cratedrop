@@ -195,6 +195,14 @@ AddEventHandler("Cratedrop:Execute", function(weapon, ammo)
 
         local jx, jy, jz = table.unpack(GetEntityCoords(crateParachute)) -- we get the parachute coords so we know where to drop the flare
         ShootSingleBulletBetweenCoords(jx, jy, jz, jx, jy + 0.0001, jz - 0.0001, 0, false, GetHashKey("weapon_flare"), 0, true, false, -1.0) -- flare needs to be dropped with coords like that, otherwise it remains static and won't remove itself later
+        while DoesObjectOfTypeExistAtCoords(jx, jy, jz, 10.0, GetHashKey("w_am_flare"), true) do
+            Wait(0)
+            local prop = GetClosestObjectOfType(jx, jy, jz, 10.0, GetHashKey("w_am_flare"), false, false, false)
+            RemoveParticleFxFromEntity(prop)
+            SetEntityAsMissionEntity(prop, true, true)
+            DeleteObject(prop)
+        end
+
         DetachEntity(crateParachute, true, true) -- detach parachute
         SetEntityCollision(crateParachute, false, true) -- remove collision, pointless right now but would be cool if animations would work and you'll be able to walk through the parachute while it's disappearing
         -- PlayEntityAnim(crateParachute, "P_cargo_chute_S_crumple", "P_cargo_chute_S", 1000.0, false, false, false, 0, 0) -- disabled since animations don't work
