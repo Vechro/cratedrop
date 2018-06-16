@@ -84,7 +84,7 @@ AddEventHandler("Cratedrop:Execute", function(weapon, ammo)
     Citizen.CreateThread(function()
         local requiredModels = {"p_cargo_chute_s", "ex_prop_adv_case_sm", "cuban800", "s_m_m_pilot_02", "prop_box_wood02a_pu", "prop_flare_01"} -- parachute, pickup case, plane, pilot, crate, flare
 
-        for i = 1, #requiredModels do -- request the 6 models the script will be using
+        for i = 1, #requiredModels do
             RequestModel(GetHashKey(requiredModels[i]))
             while not HasModelLoaded(GetHashKey(requiredModels[i])) do
                 Wait(0)
@@ -211,11 +211,35 @@ AddEventHandler("Cratedrop:Execute", function(weapon, ammo)
         StopSound(soundID) -- stop the crate beeping sound
         ReleaseSoundId(soundID) -- won't need this sound ID any longer
 
-        for i = 1, #requiredModels do -- tell the engine it's okay to unload the 5 models as we won't need them anymore
+        for i = 1, #requiredModels do
             Wait(0)
             SetModelAsNoLongerNeeded(GetHashKey(requiredModels[i]))
         end
 
         RemoveWeaponAsset(GetHashKey("weapon_flare")) -- unload the flare
+    end)
+end)
+
+AddEventHandler('onResourceStop', function(resource)
+    Citizen.CreateThread(function()
+        if resource == GetCurrentResourceName() then
+
+            DeleteEntity(pilot)
+            DeleteEntity(aircraft)
+            DeleteEntity(crateParachute)
+            DeleteEntity(advancedCrate)
+            DeleteEntity(weaponInsideCrate)
+
+            RemoveBlip(blip)
+
+            StopSound(soundID)
+            ReleaseSoundId(soundID)
+
+            for i = 1, #requiredModels do
+                Wait(0)
+                SetModelAsNoLongerNeeded(GetHashKey(requiredModels[i]))
+            end
+
+        end
     end)
 end)
