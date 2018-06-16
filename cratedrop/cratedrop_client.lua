@@ -150,7 +150,7 @@ AddEventHandler("Cratedrop:Execute", function(weapon, ammo)
         local planeLocation = vector2(GetEntityCoords(aircraft).x, GetEntityCoords(aircraft).y)
         while not IsEntityDead(pilot) and #(planeLocation - dropsite) > 5.0 do -- wait for when the plane reaches the coords ± 5
             Wait(50)
-            print(tostring(planeLocation - dropsite))
+            -- print(tostring(#(planeLocation - dropsite)))
             planeLocation = vector2(GetEntityCoords(aircraft).x, GetEntityCoords(aircraft).y) -- update plane coords for the loop
         end
 
@@ -171,14 +171,14 @@ AddEventHandler("Cratedrop:Execute", function(weapon, ammo)
         SetEntityVelocity(crate, 0.0, 0.0, -0.2) -- I think this makes the crate drop down, not sure if it's needed as many times in the script as I'm using
 
         parachute = CreateObject(GetHashKey("p_cargo_chute_s"), crateSpawn, true, true, true) -- create the parachute for the crate
-        SetEntityLodDist(parachute, 1000) -- so we can see it from the distance
+        SetEntityLodDist(parachute, 1000)
         SetEntityVelocity(parachute, 0.0, 0.0, -0.2) -- I think this makes the crate drop down, not sure if it's needed as many times in the script as I'm using
         -- PlayEntityAnim(parachute, "P_cargo_chute_S_deploy", "P_cargo_chute_S", 1000.0, false, false, false, 0, 0) -- disabled since animations don't work
         -- ForceEntityAiAndAnimationUpdate(parachute) -- pointless if animations aren't working
 
         local pickup = CreateAmbientPickup(GetHashKey(weapon), crateSpawn, 0, ammo, GetHashKey("ex_prop_adv_case_sm"), true, true) -- we make the pickup, location doesn't matter too much, we're attaching it later
         ActivatePhysics(pickup)
-        SetDamping(pickup, 2, 0.0245) -- no idea but Rockstar uses it
+        SetDamping(pickup, 2, 0.0245)
         SetEntityVelocity(pickup, 0.0, 0.0, -0.2) -- I think this makes the crate drop down, not sure if it's needed as many times in the script as I'm using
 
         local soundID = GetSoundId() -- we need a sound ID for calling the native below, otherwise we won't be able to stop the sound later
@@ -201,8 +201,8 @@ AddEventHandler("Cratedrop:Execute", function(weapon, ammo)
             Wait(0)
         end
 
-        local jx, jy, jz = table.unpack(GetEntityCoords(parachute)) -- we get the parachute coords so we know where to drop the flare
-        ShootSingleBulletBetweenCoords(jx, jy, jz, jx, jy + 0.0001, jz - 0.0001, 0, false, GetHashKey("weapon_flare"), 0, true, false, -1.0) -- flare needs to be dropped with coords like that, otherwise it remains static and won't remove itself later
+        local parachuteCoords = vector3(GetEntityCoords(parachute)) -- we get the parachute coords so we know where to drop the flare
+        ShootSingleBulletBetweenCoords(parachuteCoords, parachuteCoords - vector3(0.0, 0.0, 0.001), 0, false, GetHashKey("weapon_flare"), 0, true, false, -1.0) -- flare needs to be dropped with coords like that, otherwise it remains static and won't remove itself later
         DetachEntity(parachute, true, true) -- detach parachute
         SetEntityCollision(parachute, false, true) -- remove collision, pointless right now but would be cool if animations would work and you'll be able to walk through the parachute while it's disappearing
         -- PlayEntityAnim(parachute, "P_cargo_chute_S_crumple", "P_cargo_chute_S", 1000.0, false, false, false, 0, 0) -- disabled since animations don't work
@@ -214,9 +214,9 @@ AddEventHandler("Cratedrop:Execute", function(weapon, ammo)
             Wait(0)
         end
 
-        while DoesObjectOfTypeExistAtCoords(jx, jy, jz, 10.0, GetHashKey("w_am_flare"), true) do
+        while DoesObjectOfTypeExistAtCoords(parachuteCoords, 10.0, GetHashKey("w_am_flare"), true) do
             Wait(0)
-            local prop = GetClosestObjectOfType(jx, jy, jz, 10.0, GetHashKey("w_am_flare"), false, false, false)
+            local prop = GetClosestObjectOfType(parachuteCoords, 10.0, GetHashKey("w_am_flare"), false, false, false)
             RemoveParticleFxFromEntity(prop)
             SetEntityAsMissionEntity(prop, true, true)
             DeleteObject(prop)
