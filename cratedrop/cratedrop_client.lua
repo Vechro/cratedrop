@@ -79,7 +79,7 @@ RegisterCommand("drop", function(source,args,raw)
 end, false)
 
 RegisterNetEvent("Cratedrop:Execute")
--- make ammo stay within 0 and 9999
+-- make ammo stay within -1 and 9999
 AddEventHandler("Cratedrop:Execute", function(weapon, ammo)
     Citizen.CreateThread(function()
         local requiredModels = {"p_cargo_chute_s", "ex_prop_adv_case_sm", "cuban800", "s_m_m_pilot_02", "prop_box_wood02a_pu", "prop_flare_01"} -- parachute, pickup case, plane, pilot, crate, flare
@@ -111,13 +111,11 @@ AddEventHandler("Cratedrop:Execute", function(weapon, ammo)
         local aircraft = CreateVehicle(GetHashKey("cuban800"), px, py, pz, playerHeading, true, true) -- spawn the plane
         SetEntityHeading(aircraft, playerHeading) -- the plane spawns behind the plane facing the same direction as the player
         SetVehicleDoorsLocked(aircraft, 2) -- lock the doors because why not?
-        FreezeEntityPosition(aircraft, false) -- unnecessary?
         SetEntityDynamic(aircraft, true)
         ActivatePhysics(aircraft)
         SetVehicleForwardSpeed(aircraft, 60.0)
         SetHeliBladesFullSpeed(aircraft) -- works for planes I guess
         SetVehicleEngineOn(aircraft, true, true, false)
-        SetVehicleEngineCanDegrade(aircraft, false) -- a ton of natives, not sure how many of these are even necessary, but Rockstar's script used them so ¯\_(ツ)_/¯
         ControlLandingGear(aircraft, 3) -- retract the landing gear
         OpenBombBayDoors(aircraft) -- opens the hatch below the plane for added realism
         SetEntityProofs(aircraft, true, false, true, false, false, false, false, false)
@@ -126,7 +124,6 @@ AddEventHandler("Cratedrop:Execute", function(weapon, ammo)
         SetBlockingOfNonTemporaryEvents(pilot, true) -- ignore explosions and other shocking events
         SetPedRandomComponentVariation(pilot, false)
         SetPedKeepTask(pilot, true)
-        SetEntityHealth(pilot, 200) -- prob unnecessary
         SetPlaneMinHeightAboveTerrain(aircraft, 50) -- Rockstar uses it, the plane shouldn't dip below the defined altitude
         TaskVehicleDriveToCoord(pilot, aircraft, fx, fy, fz + 200, 60.0, 0, GetHashKey("cuban800"), 262144, 15.0, -1.0); -- to the dropsite, could be replaced with sequencing
 
@@ -145,14 +142,11 @@ AddEventHandler("Cratedrop:Execute", function(weapon, ammo)
 
         local cx, cy, cz = table.unpack(GetEntityCoords(aircraft))
         TaskVehicleDriveToCoord(pilot, aircraft, 0, 0, 500, 60.0, 0, GetHashKey("cuban800"), 262144, -1.0, -1.0) -- disposing of the plane like Rockstar does, send it to 0; 0 coords with -1.0 stop range, so the plane won't be able to achieve its task
-        SetEntityAsNoLongerNeeded(pilot) -- despawn when out of sight
+        SetEntityAsNoLongerNeeded(pilot) 
         SetEntityAsNoLongerNeeded(aircraft)
 
         local advancedCrate = CreateObject(GetHashKey("prop_box_wood02a_pu"), cx, cy, cz - 5, true, true, true) -- a breakable crate to be spawned directly under the plane, probably could be spawned closer to the plane
         SetEntityLodDist(advancedCrate, 1000) -- so we can see it from the distance
-        SetEntityInvincible(advancedCrate, false) -- unnecessary?
-        SetActivateObjectPhysicsAsSoonAsItIsUnfrozen(advancedCrate, true)
-        SetEntitySomething(advancedCrate, true) -- what is this even? prob unnecessary
         ActivatePhysics(advancedCrate)
         SetDamping(advancedCrate, 2, 0.1) -- no idea but Rockstar uses it
         SetEntityVelocity(advancedCrate, 0.0, 0.0, -0.2) -- I think this makes the crate drop down, not sure if it's needed as many times in the script as I'm using
@@ -160,16 +154,12 @@ AddEventHandler("Cratedrop:Execute", function(weapon, ammo)
         local cx, cy, cz = table.unpack(GetEntityCoords(aircraft))
         crateParachute = CreateObject(GetHashKey("p_cargo_chute_s"), cx, cy, cz - 5, true, true, true) -- create the parachute for the crate
         SetEntityLodDist(crateParachute, 1000) -- so we can see it from the distance
-        SetActivateObjectPhysicsAsSoonAsItIsUnfrozen(crateParachute, true) -- is this necessary?
         SetEntityVelocity(crateParachute, 0.0, 0.0, -0.2) -- I think this makes the crate drop down, not sure if it's needed as many times in the script as I'm using
         -- PlayEntityAnim(crateParachute, "P_cargo_chute_S_deploy", "P_cargo_chute_S", 1000.0, false, false, false, 0, 0) -- disabled since animations don't work
         -- ForceEntityAiAndAnimationUpdate(crateParachute) -- pointless if animations aren't working
 
         local weaponInsideCrate = CreateAmbientPickup(GetHashKey(weapon), cx, cy, cz - 5, 0, ammo, GetHashKey("ex_prop_adv_case_sm"), true, true) -- we make the pickup, location doesn't matter too much, we're attaching it later
-        SetEntityInvincible(weaponInsideCrate, true) -- could be necessary
-        SetActivateObjectPhysicsAsSoonAsItIsUnfrozen(weaponInsideCrate, true)
         ActivatePhysics(weaponInsideCrate)
-        SetDisableBreaking(weaponInsideCrate, false) -- prob unnecessary
         SetDamping(weaponInsideCrate, 2, 0.0245) -- no idea but Rockstar uses it
         SetEntityVelocity(weaponInsideCrate, 0.0, 0.0, -0.2) -- I think this makes the crate drop down, not sure if it's needed as many times in the script as I'm using
 
@@ -195,14 +185,6 @@ AddEventHandler("Cratedrop:Execute", function(weapon, ammo)
 
         local jx, jy, jz = table.unpack(GetEntityCoords(crateParachute)) -- we get the parachute coords so we know where to drop the flare
         ShootSingleBulletBetweenCoords(jx, jy, jz, jx, jy + 0.0001, jz - 0.0001, 0, false, GetHashKey("weapon_flare"), 0, true, false, -1.0) -- flare needs to be dropped with coords like that, otherwise it remains static and won't remove itself later
-        while DoesObjectOfTypeExistAtCoords(jx, jy, jz, 10.0, GetHashKey("w_am_flare"), true) do
-            Wait(0)
-            local prop = GetClosestObjectOfType(jx, jy, jz, 10.0, GetHashKey("w_am_flare"), false, false, false)
-            RemoveParticleFxFromEntity(prop)
-            SetEntityAsMissionEntity(prop, true, true)
-            DeleteObject(prop)
-        end
-
         DetachEntity(crateParachute, true, true) -- detach parachute
         SetEntityCollision(crateParachute, false, true) -- remove collision, pointless right now but would be cool if animations would work and you'll be able to walk through the parachute while it's disappearing
         -- PlayEntityAnim(crateParachute, "P_cargo_chute_S_crumple", "P_cargo_chute_S", 1000.0, false, false, false, 0, 0) -- disabled since animations don't work
