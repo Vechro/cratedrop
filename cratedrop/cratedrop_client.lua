@@ -164,54 +164,54 @@ AddEventHandler("Cratedrop:Execute", function(weapon, ammo)
         SetEntityAsNoLongerNeeded(pilot) 
         SetEntityAsNoLongerNeeded(aircraft)
 
-        local advancedCrate = CreateObject(GetHashKey("prop_box_wood02a_pu"), cx, cy, cz - 5, true, true, true) -- a breakable crate to be spawned directly under the plane, probably could be spawned closer to the plane
-        SetEntityLodDist(advancedCrate, 1000) -- so we can see it from the distance
-        ActivatePhysics(advancedCrate)
-        SetDamping(advancedCrate, 2, 0.1) -- no idea but Rockstar uses it
-        SetEntityVelocity(advancedCrate, 0.0, 0.0, -0.2) -- I think this makes the crate drop down, not sure if it's needed as many times in the script as I'm using
+        local crate = CreateObject(GetHashKey("prop_box_wood02a_pu"), cx, cy, cz - 5, true, true, true) -- a breakable crate to be spawned directly under the plane, probably could be spawned closer to the plane
+        SetEntityLodDist(crate, 1000) -- so we can see it from the distance
+        ActivatePhysics(crate)
+        SetDamping(crate, 2, 0.1) -- no idea but Rockstar uses it
+        SetEntityVelocity(crate, 0.0, 0.0, -0.2) -- I think this makes the crate drop down, not sure if it's needed as many times in the script as I'm using
 
         local cx, cy, cz = table.unpack(GetEntityCoords(aircraft))
-        crateParachute = CreateObject(GetHashKey("p_cargo_chute_s"), cx, cy, cz - 5, true, true, true) -- create the parachute for the crate
-        SetEntityLodDist(crateParachute, 1000) -- so we can see it from the distance
-        SetEntityVelocity(crateParachute, 0.0, 0.0, -0.2) -- I think this makes the crate drop down, not sure if it's needed as many times in the script as I'm using
-        -- PlayEntityAnim(crateParachute, "P_cargo_chute_S_deploy", "P_cargo_chute_S", 1000.0, false, false, false, 0, 0) -- disabled since animations don't work
-        -- ForceEntityAiAndAnimationUpdate(crateParachute) -- pointless if animations aren't working
+        parachute = CreateObject(GetHashKey("p_cargo_chute_s"), cx, cy, cz - 5, true, true, true) -- create the parachute for the crate
+        SetEntityLodDist(parachute, 1000) -- so we can see it from the distance
+        SetEntityVelocity(parachute, 0.0, 0.0, -0.2) -- I think this makes the crate drop down, not sure if it's needed as many times in the script as I'm using
+        -- PlayEntityAnim(parachute, "P_cargo_chute_S_deploy", "P_cargo_chute_S", 1000.0, false, false, false, 0, 0) -- disabled since animations don't work
+        -- ForceEntityAiAndAnimationUpdate(parachute) -- pointless if animations aren't working
 
-        local weaponInsideCrate = CreateAmbientPickup(GetHashKey(weapon), cx, cy, cz - 5, 0, ammo, GetHashKey("ex_prop_adv_case_sm"), true, true) -- we make the pickup, location doesn't matter too much, we're attaching it later
-        ActivatePhysics(weaponInsideCrate)
-        SetDamping(weaponInsideCrate, 2, 0.0245) -- no idea but Rockstar uses it
-        SetEntityVelocity(weaponInsideCrate, 0.0, 0.0, -0.2) -- I think this makes the crate drop down, not sure if it's needed as many times in the script as I'm using
+        local pickup = CreateAmbientPickup(GetHashKey(weapon), cx, cy, cz - 5, 0, ammo, GetHashKey("ex_prop_adv_case_sm"), true, true) -- we make the pickup, location doesn't matter too much, we're attaching it later
+        ActivatePhysics(pickup)
+        SetDamping(pickup, 2, 0.0245) -- no idea but Rockstar uses it
+        SetEntityVelocity(pickup, 0.0, 0.0, -0.2) -- I think this makes the crate drop down, not sure if it's needed as many times in the script as I'm using
 
         local soundID = GetSoundId() -- we need a sound ID for calling the native below, otherwise we won't be able to stop the sound later
-        PlaySoundFromEntity(soundID, "Crate_Beeps", weaponInsideCrate, "MP_CRATE_DROP_SOUNDS", true, 0) -- crate beep sound emitted from the pickup
+        PlaySoundFromEntity(soundID, "Crate_Beeps", pickup, "MP_CRATE_DROP_SOUNDS", true, 0) -- crate beep sound emitted from the pickup
 
-        local blip = AddBlipForEntity(weaponInsideCrate) -- Rockstar did the blip exactly like this
+        local blip = AddBlipForEntity(pickup) -- Rockstar did the blip exactly like this
         SetBlipSprite(blip, 351) -- 408 also works, supposedly the same blip but bigger and more detailed?
         SetBlipNameFromTextFile(blip, "AMD_BLIPN")
         SetBlipScale(blip, 0.7)
         SetBlipColour(blip, 2)
         SetBlipAlpha(blip, 120) -- blip will be semi-transparent
 
-        -- local crateBeacon = StartParticleFxLoopedOnEntity_2("scr_crate_drop_beacon", weaponInsideCrate, 0.0, 0.0, 0.2, 0.0, 0.0, 0.0, 1065353216, 0, 0, 0, 1065353216, 1065353216, 1065353216, 0)--1.0, false, false, false) -- no idea how to make it work, weapon_flare will do for now
+        -- local crateBeacon = StartParticleFxLoopedOnEntity_2("scr_crate_drop_beacon", pickup, 0.0, 0.0, 0.2, 0.0, 0.0, 0.0, 1065353216, 0, 0, 0, 1065353216, 1065353216, 1065353216, 0)--1.0, false, false, false) -- no idea how to make it work, weapon_flare will do for now
         -- SetParticleFxLoopedColour(crateBeacon, 0.8, 0.18, 0.19, false) -- reliant on the line above, Rockstar did it like this
 
-        AttachEntityToEntity(crateParachute, weaponInsideCrate, 0, 0.0, 0.0, 0.1, 0.0, 0.0, 0.0, false, false, false, false, 2, true) -- attach the crate to the pickup
-        AttachEntityToEntity(weaponInsideCrate, advancedCrate, 0, 0.0, 0.0, 0.3, 0.0, 0.0, 0.0, false, false, true, false, 2, true) -- attach the pickup to the crate, doing it in any other order makes the crate drop spazz out
+        AttachEntityToEntity(parachute, pickup, 0, 0.0, 0.0, 0.1, 0.0, 0.0, 0.0, false, false, false, false, 2, true) -- attach the crate to the pickup
+        AttachEntityToEntity(pickup, crate, 0, 0.0, 0.0, 0.3, 0.0, 0.0, 0.0, false, false, true, false, 2, true) -- attach the pickup to the crate, doing it in any other order makes the crate drop spazz out
 
-        while HasObjectBeenBroken(advancedCrate) == false do -- wait till the crate gets broken (probably on impact), then continue with the script
+        while HasObjectBeenBroken(crate) == false do -- wait till the crate gets broken (probably on impact), then continue with the script
             Wait(0)
         end
 
-        local jx, jy, jz = table.unpack(GetEntityCoords(crateParachute)) -- we get the parachute coords so we know where to drop the flare
+        local jx, jy, jz = table.unpack(GetEntityCoords(parachute)) -- we get the parachute coords so we know where to drop the flare
         ShootSingleBulletBetweenCoords(jx, jy, jz, jx, jy + 0.0001, jz - 0.0001, 0, false, GetHashKey("weapon_flare"), 0, true, false, -1.0) -- flare needs to be dropped with coords like that, otherwise it remains static and won't remove itself later
-        DetachEntity(crateParachute, true, true) -- detach parachute
-        SetEntityCollision(crateParachute, false, true) -- remove collision, pointless right now but would be cool if animations would work and you'll be able to walk through the parachute while it's disappearing
-        -- PlayEntityAnim(crateParachute, "P_cargo_chute_S_crumple", "P_cargo_chute_S", 1000.0, false, false, false, 0, 0) -- disabled since animations don't work
-        DeleteEntity(crateParachute)
-        DetachEntity(weaponInsideCrate) -- will despawn on its own
+        DetachEntity(parachute, true, true) -- detach parachute
+        SetEntityCollision(parachute, false, true) -- remove collision, pointless right now but would be cool if animations would work and you'll be able to walk through the parachute while it's disappearing
+        -- PlayEntityAnim(parachute, "P_cargo_chute_S_crumple", "P_cargo_chute_S", 1000.0, false, false, false, 0, 0) -- disabled since animations don't work
+        DeleteEntity(parachute)
+        DetachEntity(pickup) -- will despawn on its own
         SetBlipAlpha(blip, 255) -- make the blip fully visible
 
-        while DoesEntityExist(weaponInsideCrate) do -- wait till the pickup gets picked up, then the script can continue
+        while DoesEntityExist(pickup) do -- wait till the pickup gets picked up, then the script can continue
             Wait(0)
         end
 
@@ -246,9 +246,9 @@ AddEventHandler('onResourceStop', function(resource)
 
             DeleteEntity(pilot)
             DeleteEntity(aircraft)
-            DeleteEntity(crateParachute)
-            DeleteEntity(advancedCrate)
-            DeleteEntity(weaponInsideCrate)
+            DeleteEntity(parachute)
+            DeleteEntity(crate)
+            DeleteEntity(pickup)
 
             RemoveBlip(blip)
 
