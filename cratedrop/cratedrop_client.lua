@@ -104,11 +104,11 @@ AddEventHandler("Cratedrop:Execute", function(weapon, ammo)
         end
 
         local playerPed = GetPlayerPed(-1)
-        local fx, fy, fz = table.unpack(GetOffsetFromEntityInWorldCoords(playerPed, 0.0, 12.5, 0)) -- location where to drop the crate
-        local px, py, pz = table.unpack(GetOffsetFromEntityInWorldCoords(playerPed, 0.0, -400.0, 500.0)) -- location for plane spawning
+        local dropsite = vector3(GetOffsetFromEntityInWorldCoords(playerPed, 0.0, 12.5, 200)) -- location where to drop the crate
+        local planeSpawn = vector3(GetOffsetFromEntityInWorldCoords(playerPed, 0.0, -400.0, 500.0)) -- location for plane spawning, should replace it with a system that spawns where the player isn't looking
         local playerHeading = GetEntityHeading(playerPed)
 
-        local aircraft = CreateVehicle(GetHashKey("cuban800"), px, py, pz, playerHeading, true, true) -- spawn the plane
+        local aircraft = CreateVehicle(GetHashKey("cuban800"), planeSpawn, playerHeading, true, true) -- spawn the plane
         SetEntityHeading(aircraft, playerHeading) -- the plane spawns behind the plane facing the same direction as the player
         SetVehicleDoorsLocked(aircraft, 2) -- lock the doors because why not?
         SetEntityDynamic(aircraft, true)
@@ -124,11 +124,11 @@ AddEventHandler("Cratedrop:Execute", function(weapon, ammo)
         SetBlockingOfNonTemporaryEvents(pilot, true) -- ignore explosions and other shocking events
         SetPedRandomComponentVariation(pilot, false)
         SetPedKeepTask(pilot, true)
-        SetPlaneMinHeightAboveTerrain(aircraft, 50) -- Rockstar uses it, the plane shouldn't dip below the defined altitude
-        TaskVehicleDriveToCoord(pilot, aircraft, fx, fy, fz + 200, 60.0, 0, GetHashKey("cuban800"), 262144, 15.0, -1.0); -- to the dropsite, could be replaced with sequencing
+        SetPlaneMinHeightAboveTerrain(aircraft, 50) -- the plane shouldn't dip below the defined altitude
+        TaskVehicleDriveToCoord(pilot, aircraft, dropsite, 60.0, 0, GetHashKey("cuban800"), 262144, 15.0, -1.0); -- to the dropsite, could be replaced with sequencing
 
         local hx, hy = table.unpack(GetEntityCoords(aircraft))
-        while not IsEntityDead(pilot) and not (((fx - 5) < hx) and (hx < (fx + 5)) and ((fy - 5) < hy) and (hy < (fy + 5))) do -- wait for when the plane reaches the coords ± 5
+        while not IsEntityDead(pilot) and not (((dropsite.x - 5) < hx) and (hx < (dropsite.x + 5)) and ((dropsite.y - 5) < hy) and (hy < (dropsite.y + 5))) do -- wait for when the plane reaches the coords ± 5
             Wait(0)
             hx, hy = table.unpack(GetEntityCoords(aircraft)) -- update plane coords for the loop
             if IsEntityDead(pilot) then -- I think this will end the script if the pilot dies
@@ -217,6 +217,7 @@ AddEventHandler("Cratedrop:Execute", function(weapon, ammo)
         end
 
         RemoveWeaponAsset(GetHashKey("weapon_flare")) -- unload the flare
+
     end)
 end)
 
