@@ -146,7 +146,6 @@ AddEventHandler("Cratedrop:Execute", function(weapon, ammo)
         SetPlaneMinHeightAboveTerrain(aircraft, 50) -- the plane shouldn't dip below the defined altitude
         TaskVehicleDriveToCoord(pilot, aircraft, dropsite, 60.0, 0, GetHashKey("cuban800"), 262144, 15.0, -1.0); -- to the dropsite, could be replaced with sequencing
         
-        local dropsite = vector2(dropsite.x, dropsite.y)
         local planeLocation = vector2(GetEntityCoords(aircraft).x, GetEntityCoords(aircraft).y)
         while not IsEntityDead(pilot) and #(planeLocation - dropsite) > 5.0 do -- wait for when the plane reaches the coords ± 5
             Wait(50)
