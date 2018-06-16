@@ -151,8 +151,6 @@ AddEventHandler("Cratedrop:Execute", function(weapon, ammo)
             Wait(50)
             print(tostring(planeLocation - dropsite))
             planeLocation = vector2(GetEntityCoords(aircraft).x, GetEntityCoords(aircraft).y) -- update plane coords for the loop
-        end
-
         if IsEntityDead(pilot) == true then -- I think this will end the script if the pilot dies, no idea how to return works
             do return end
         end
