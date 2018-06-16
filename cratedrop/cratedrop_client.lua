@@ -2,11 +2,21 @@ weaponList = {
     ["appistol"] = "PICKUP_WEAPON_APPISTOL",
     ["stungun"] = "PICKUP_WEAPON_STUNGUN",
 
+    ["microsmg"] = "PICKUP_WEAPON_MICROSMG",
+    ["smg"] = "PICKUP_WEAPON_SMG",
+
+    ["gusenbergsweeper"] = "PICKUP_WEAPON_GUSENBERG",
     ["mg"] = "PICKUP_WEAPON_MG",
     ["combatmg"] = "PICKUP_WEAPON_COMBATMG",
 
+    ["pumpshotgun"] = "PICKUP_WEAPON_PUMPSHOTGUN",
+    ["sawnoffshotgun"] = "PICKUP_WEAPON_SAWNOFFSHOTGUN",
     ["assaultshotgun"] = "PICKUP_WEAPON_AUTOSHOTGUN",
     ["heavyshotgun"] = "PICKUP_WEAPON_HEAVYSHOTGUN",
+    ["bullpupshotgun"] = "PICKUP_WEAPON_BULLPUPSHOTGUN",
+    ["sweepershotgun"] = "PICKUP_WEAPON_AUTOSHOTGUN",
+    ["doublebarrelshotgun"] = "PICKUP_WEAPON_DBSHOTGUN",
+    ["musket"] = "PICKUP_WEAPON_MUSKET",
 
     ["advancedrifle"] = "PICKUP_WEAPON_ADVANCEDRIFLE",
     ["specialcarbine"] = "PICKUP_WEAPON_SPECIALCARBINE",
@@ -24,6 +34,7 @@ weaponList = {
     ["proximitymine"] = "PICKUP_WEAPON_PROXMINE",
     ["stickybomb"] = "PICKUP_WEAPON_STICKYBOMB",
     ["teargas"] = "PICKUP_WEAPON_SMOKEGRENADE",
+    ["molotov"] = "PICKUP_WEAPON_MOLOTOV",
 
     ["sniperrifle"] = "PICKUP_WEAPON_SNIPERRIFLE",
     ["heavysniper"] = "PICKUP_WEAPON_HEAVYSNIPER",
@@ -33,7 +44,7 @@ weaponList = {
 -- feel free to expand the weaponList, I can't be bothered to add everything there, format is as follows: ["chat command argument"] = "pickup model name"
 -- where I got the model names http://web.archive.org/web/20170909034953/http://gtaforums.com/topic/883160-dlc-weapons-pickup-hashes/
 
--- The next 15 lines add support for Scammer's Universal Menu, it can be removed if it causes issues
+-- the next 16 lines add support for Scammer's Universal Menu, it can be removed if it causes any issues
 AddEventHandler("menu:setup", function()
 	TriggerEvent("menu:registerModuleMenu", "Crate Drop", function(id)
 		local ammoAmounts = { 10, 20, 50, 100, 500, 1000, 9999 }
@@ -42,8 +53,8 @@ AddEventHandler("menu:setup", function()
 			TriggerEvent("menu:addModuleSubMenu", id, weaponLabel, function(id)
 				for _, ammoAmount in ipairs(ammoAmounts) do
 					TriggerEvent("menu:addModuleItem", id, "Ammo: " .. ammoAmount, nil, false, function()
-						TriggerEvent("Cratedrop:Execute", weaponName, ammoAmount)
-						TriggerEvent("menu:hideMenu")
+                        TriggerEvent("Cratedrop:Execute", weaponName, ammoAmount)
+                        TriggerEvent("menu:hideMenu")
 					end)
 				end
 			end, false)
@@ -68,12 +79,12 @@ RegisterCommand("drop", function(source,args,raw)
 end, false)
 
 RegisterNetEvent("Cratedrop:Execute")
-
+-- make ammo stay within 0 and 9999
 AddEventHandler("Cratedrop:Execute", function(weapon, ammo)
     Citizen.CreateThread(function()
-        local requiredModels = {"p_cargo_chute_s", "ex_prop_adv_case_sm", "cuban800", "s_m_m_pilot_02", "prop_box_wood02a_pu"} -- parachute, pickup case, plane, pilot, crate
+        local requiredModels = {"p_cargo_chute_s", "ex_prop_adv_case_sm", "cuban800", "s_m_m_pilot_02", "prop_box_wood02a_pu", "prop_flare_01"} -- parachute, pickup case, plane, pilot, crate, flare
 
-        for i = 1, #requiredModels do -- request the 5 models the script will be using
+        for i = 1, #requiredModels do -- request the 6 models the script will be using
             RequestModel(GetHashKey(requiredModels[i]))
             while not HasModelLoaded(GetHashKey(requiredModels[i])) do
                 Wait(0)
@@ -108,7 +119,7 @@ AddEventHandler("Cratedrop:Execute", function(weapon, ammo)
         SetVehicleEngineOn(aircraft, true, true, false)
         SetVehicleEngineCanDegrade(aircraft, false) -- a ton of natives, not sure how many of these are even necessary, but Rockstar's script used them so ¯\_(ツ)_/¯
         ControlLandingGear(aircraft, 3) -- retract the landing gear
-        OpenBombBayDoors(aircraft) -- opens the hatch below the plane
+        OpenBombBayDoors(aircraft) -- opens the hatch below the plane for added realism
         SetEntityProofs(aircraft, true, false, true, false, false, false, false, false)
 
         local pilot = CreatePedInsideVehicle(aircraft, 1, GetHashKey("s_m_m_pilot_02"), -1, true, true) -- put the pilot in the plane
@@ -116,8 +127,8 @@ AddEventHandler("Cratedrop:Execute", function(weapon, ammo)
         SetPedRandomComponentVariation(pilot, false)
         SetPedKeepTask(pilot, true)
         SetEntityHealth(pilot, 200) -- prob unnecessary
-        SetPlaneMinHeightAboveTerrain(aircraft, 50) -- Rockstar uses it, I think the plane won't dip below the defined altitude
-        TaskVehicleDriveToCoord(pilot, aircraft, fx, fy, fz + 200, 60.0, 0, GetHashKey("cuban800"), 262144, 15.0, -1.0); -- to the dropsite
+        SetPlaneMinHeightAboveTerrain(aircraft, 50) -- Rockstar uses it, the plane shouldn't dip below the defined altitude
+        TaskVehicleDriveToCoord(pilot, aircraft, fx, fy, fz + 200, 60.0, 0, GetHashKey("cuban800"), 262144, 15.0, -1.0); -- to the dropsite, could be replaced with sequencing
 
         local hx, hy = table.unpack(GetEntityCoords(aircraft))
         while not IsEntityDead(pilot) and not (((fx - 5) < hx) and (hx < (fx + 5)) and ((fy - 5) < hy) and (hy < (fy + 5))) do -- wait for when the plane reaches the coords ± 5
@@ -172,7 +183,7 @@ AddEventHandler("Cratedrop:Execute", function(weapon, ammo)
         SetBlipColour(blip, 2)
         SetBlipAlpha(blip, 120) -- blip will be semi-transparent
 
-        -- crateBeacon = StartParticleFxLoopedOnEntity_2("scr_crate_drop_beacon", weaponInsideCrate, 0.0, 0.0, 0.2, 0.0, 0.0, 0.0, 1.0, false, false, false) -- no idea how to make it work, weapon_flare will do for now
+        -- local crateBeacon = StartParticleFxLoopedOnEntity_2("scr_crate_drop_beacon", weaponInsideCrate, 0.0, 0.0, 0.2, 0.0, 0.0, 0.0, 1065353216, 0, 0, 0, 1065353216, 1065353216, 1065353216, 0)--1.0, false, false, false) -- no idea how to make it work, weapon_flare will do for now
         -- SetParticleFxLoopedColour(crateBeacon, 0.8, 0.18, 0.19, false) -- reliant on the line above, Rockstar did it like this
 
         AttachEntityToEntity(crateParachute, weaponInsideCrate, 0, 0.0, 0.0, 0.1, 0.0, 0.0, 0.0, false, false, false, false, 2, true) -- attach the crate to the pickup
@@ -187,12 +198,20 @@ AddEventHandler("Cratedrop:Execute", function(weapon, ammo)
         DetachEntity(crateParachute, true, true) -- detach parachute
         SetEntityCollision(crateParachute, false, true) -- remove collision, pointless right now but would be cool if animations would work and you'll be able to walk through the parachute while it's disappearing
         -- PlayEntityAnim(crateParachute, "P_cargo_chute_S_crumple", "P_cargo_chute_S", 1000.0, false, false, false, 0, 0) -- disabled since animations don't work
-        DeleteEntity(crateParachute) -- delete the parachute
+        DeleteEntity(crateParachute)
         DetachEntity(weaponInsideCrate) -- will despawn on its own
         SetBlipAlpha(blip, 255) -- make the blip fully visible
 
         while DoesEntityExist(weaponInsideCrate) do -- wait till the pickup gets picked up, then the script can continue
             Wait(0)
+        end
+
+        while DoesObjectOfTypeExistAtCoords(jx, jy, jz, 10.0, GetHashKey("w_am_flare"), true) do
+            Wait(0)
+            local prop = GetClosestObjectOfType(jx, jy, jz, 10.0, GetHashKey("w_am_flare"), false, false, false)
+            RemoveParticleFxFromEntity(prop)
+            SetEntityAsMissionEntity(prop, true, true)
+            DeleteObject(prop)
         end
 
         if DoesBlipExist(blip) then -- remove the blip, should get removed when the pickup gets picked up anyway, but isn't a bad idea to make sure of it
