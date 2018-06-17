@@ -152,13 +152,26 @@ function DropCrate(weapon, ammo, coords)
             Wait(0)
         end
 
-        local planeSpawn = coords + vector3(-400.0, 0.0, 500.0) -- location for plane spawning, should replace it with a system that spawns where the player isn't looking
+        local planeSpawn = coords + vector3(-400.0, 0.0, 500.0) -- location for plane spawning
+
+        rHeading = math.random(0, 360) + 0.0
+        radius = 400.0
+
+        theta = (rHeading / 180.0) * math.pi
+
+        tx = math.cos(theta) * radius
+        ty = math.sin(theta) * radius
+
+        rPlaneSpawn = vector3(coords.x - (math.cos(theta) * radius), coords.y - (math.sin(theta) * radius), 500.0)
+
+        print("rPlaneSpawn: " .. rPlaneSpawn)
+        print("rPlaneSpawn distance: " .. #(rPlaneSpawn - coords))
+
         local dx = coords.x - planeSpawn.x
         local dy = coords.y - planeSpawn.y
-        local heading = GetHeadingFromVector_2d(dx, dy)
-        print(heading)
+        local heading = GetHeadingFromVector_2d(dx, dy) -- determine plane heading from coordinates
 
-        aircraft = CreateVehicle(GetHashKey("cuban800"), planeSpawn, heading, true, true) -- spawn the plane
+        aircraft = CreateVehicle(GetHashKey("cuban800"), rPlaneSpawn, heading, true, true) -- spawn the plane
         SetEntityHeading(aircraft, heading) -- the plane spawns behind the player facing the same direction as the player
         SetVehicleDoorsLocked(aircraft, 2) -- lock the doors because why not?
         SetEntityDynamic(aircraft, true)
@@ -176,13 +189,12 @@ function DropCrate(weapon, ammo, coords)
         SetPedKeepTask(pilot, true)
         SetPlaneMinHeightAboveTerrain(aircraft, 50) -- the plane shouldn't dip below the defined altitude
 
-        TaskVehicleDriveToCoord(pilot, aircraft, coords + vector3(0.0, 0.0, 500.0), 60.0, 0, GetHashKey("cuban800"), 262144, 15.0, -1.0); -- to the dropsite, could be replaced with sequencing
+        TaskVehicleDriveToCoord(pilot, aircraft, coords + vector3(0.0, 0.0, 500.0), 60.0, 0, GetHashKey("cuban800"), 262144, 15.0, -1.0); -- to the dropsite, could be replaced with a task sequence
 
         local dropsite = vector2(coords.x, coords.y)
         local planeLocation = vector2(GetEntityCoords(aircraft).x, GetEntityCoords(aircraft).y)
         while not IsEntityDead(pilot) and #(planeLocation - dropsite) > 5.0 do -- wait for when the plane reaches the coords ± 5
             Wait(100)
-            print(#(planeLocation - dropsite))
             planeLocation = vector2(GetEntityCoords(aircraft).x, GetEntityCoords(aircraft).y) -- update plane coords for the loop
         end
 
@@ -194,7 +206,6 @@ function DropCrate(weapon, ammo, coords)
         SetEntityAsNoLongerNeeded(pilot) 
         SetEntityAsNoLongerNeeded(aircraft)
 
-        -- local crateSpawn = vector3(GetOffsetFromEntityInWorldCoords(aircraft, 0.0, 0.0, -5.0))
         local crateSpawn = vector3(coords.x, coords.y, GetEntityCoords(aircraft).z - 5.0) -- crate will drop to the exact position as planned, not at the plane's current position
 
         crate = CreateObject(GetHashKey("prop_box_wood02a_pu"), crateSpawn, true, true, true) -- a breakable crate to be spawned directly under the plane, probably could be spawned closer to the plane
@@ -206,6 +217,7 @@ function DropCrate(weapon, ammo, coords)
         parachute = CreateObject(GetHashKey("p_cargo_chute_s"), crateSpawn, true, true, true) -- create the parachute for the crate
         SetEntityLodDist(parachute, 1000)
         SetEntityVelocity(parachute, 0.0, 0.0, -0.2) -- I think this makes the crate drop down, not sure if it's needed as many times in the script as I'm using
+
         -- PlayEntityAnim(parachute, "P_cargo_chute_S_deploy", "P_cargo_chute_S", 1000.0, false, false, false, 0, 0) -- disabled since animations don't work
         -- ForceEntityAiAndAnimationUpdate(parachute) -- pointless if animations aren't working
 
