@@ -90,18 +90,12 @@ RegisterCommand("drop", function(playerServerID, args, rawString)
             print("Cratedrop failed: weapon unrecognized, ammo count: " .. args[2])
         end
     elseif weaponList[args[1]] ~= nil and tonumber(args[2]) == nil then
-        TriggerEvent("Cratedrop:Execute", weaponList[args[1]], 250)
+        TriggerEvent("Cratedrop:Execute", weaponList[args[1]], 250, args[3] or false, args[4] or false, args[5] or false, args[6] or false)
         print("Cratedrop succeeded: weapon: " .. args[1] .. ", ammo count unrecognized, defaulting to 250")
     elseif weaponList[args[1]] ~= nil and tonumber(args[2]) ~= nil then
-        TriggerEvent("Cratedrop:Execute", weaponList[args[1]], tonumber(args[2]))
+        TriggerEvent("Cratedrop:Execute", weaponList[args[1]], tonumber(args[2]), args[3] or false, args[4] or false, args[5] or false, args[6] or false)
         print("Cratedrop succeeded: weapon: " .. args[1] .. ", ammo count: " .. args[2])
     end
-end, false)
-
-RegisterCommand("droptest", function(playerServerID, args, rawString)
-    -- local dropCoords = vector3(GetOffsetFromEntityInWorldCoords(GetPlayerFromServerId(playerServerID), 0.0, 12.5, 200.0))
-        TriggerEvent("Cratedrop:Execute", weaponList["musket"], tonumber("1"), true, "f")
-        print("Cratedrop succeeded: weapon: musket, ammo count: 1, nil coords and roofcheck is true")
 end, false)
 
 function DropCrate(weapon, ammo, coords)
@@ -129,7 +123,6 @@ function DropCrate(weapon, ammo, coords)
         end
 
         local playerPed = PlayerPedId()
-        -- local dropsite = (coordTable and vector3(coordTable)) or vector3(GetOffsetFromEntityInWorldCoords(playerPed, 0.0, 12.5, 200.0))
         local planeSpawn = vector3(GetOffsetFromEntityInWorldCoords(playerPed, 0.0, -400.0, 500.0)) -- location for plane spawning, should replace it with a system that spawns where the player isn't looking
         local playerHeading = GetEntityHeading(playerPed)
 
@@ -156,7 +149,6 @@ function DropCrate(weapon, ammo, coords)
         local planeLocation = vector2(GetEntityCoords(aircraft).x, GetEntityCoords(aircraft).y)
         while not IsEntityDead(pilot) and #(planeLocation - dropsite) > 5.0 do -- wait for when the plane reaches the coords ± 5
             Wait(50)
-            -- print(tostring(#(planeLocation - dropsite)))
             planeLocation = vector2(GetEntityCoords(aircraft).x, GetEntityCoords(aircraft).y) -- update plane coords for the loop
         end
 
@@ -245,15 +237,10 @@ function DropCrate(weapon, ammo, coords)
 end
 
 RegisterNetEvent("Cratedrop:Execute")
--- should make ammo stay within -1 and 9999
 AddEventHandler("Cratedrop:Execute", function(weapon, ammo, roofCheck, x, y, z)
     Citizen.CreateThread(function()
 
         local roofCheck = roofCheck or false -- if roofCheck is true then a check will be performed if a plane can drop a crate to the specified location before actually spawning a plane, if it can't, function won't be called
-        -- local playerPed = PlayerPedId() -- location where to drop the crate
-        -- local coordTable = coordTable or GetOffsetFromEntityInWorldCoords(playerPed, 0.0, 12.5, 200.0)
-        -- local dropsite = (coordTable and vector3(coordTable)) or vector3(GetOffsetFromEntityInWorldCoords(playerPed, 0.0, 12.5, 200.0))
-        -- print("coordTable: " .. tostring(coordTable))
         local dropsite
         if not x or not y or not z or not tonumber(x) or not tonumber(y) or not tonumber(z) then
             dropsite = vector3(GetOffsetFromEntityInWorldCoords(PlayerPedId(), 0.0, 15.0, 0.0))
@@ -264,24 +251,14 @@ AddEventHandler("Cratedrop:Execute", function(weapon, ammo, roofCheck, x, y, z)
         if roofCheck then
             local ray = StartShapeTestRay(dropsite + vector3(0.0, 0.0, 200.0), dropsite, -1, -1, 0) -- bitwise flag could also be 17
             local _, hit, impactCoords = GetShapeTestResult(ray)
-            --[[
-            print(tostring("hitBoolean: " .. hit))
-            print(tostring("dropsite: " .. dropsite))
-            print(tostring("dropsite -200: " .. dropsite - vector3(0.0, 0.0, 200.0)))
-            print(tostring("impactCoords: " .. vector3(impactCoords)))
-            print(tostring("PedCoords: " .. GetEntityCoords(playerPed)))
-            print(tostring("ForwardVector: " .. GetEntityForwardVector(playerPed)))
-            print(tostring("offset: " .. GetOffsetFromEntityInWorldCoords(playerPed, 0.0, 12.5, 0.0)))
-            print(tostring("offset2: " .. (GetEntityCoords(playerPed) + GetEntityForwardVector(playerPed) * 12.5)))
-            -]]
             if hit == 0 or (#((dropsite - vector3(0.0, 0.0, 200.0)) - vector3(impactCoords)) < 10.0) then
-                print("roofcheck success!")
+                print("Dropping to given coordinates!")
                 DropCrate(weapon, ammo, dropsite)
             else
-                print("no room for a drop, you dip!") return
+                print("Unable to drop to given coordinates.") return
             end
         else
-            print("roofcheck skipped")
+            print("Not checking if dropping is possible.")
             DropCrate(weapon, ammo, dropsite)
         end
 
