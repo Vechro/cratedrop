@@ -98,6 +98,35 @@ RegisterCommand("drop", function(playerServerID, args, rawString)
     end
 end, false)
 
+RegisterNetEvent("Cratedrop:Execute")
+AddEventHandler("Cratedrop:Execute", function(weapon, ammo, roofCheck, x, y, z)
+    Citizen.CreateThread(function()
+
+        local roofCheck = roofCheck or false -- if roofCheck is true then a check will be performed if a plane can drop a crate to the specified location before actually spawning a plane, if it can't, function won't be called
+        local dropsite
+        if not x or not y or not z or not tonumber(x) or not tonumber(y) or not tonumber(z) then
+            dropsite = vector3(GetOffsetFromEntityInWorldCoords(PlayerPedId(), 0.0, 15.0, 0.0))
+        else
+            dropsite = vector3(x, y, z)
+        end
+
+        if roofCheck then
+            local ray = StartShapeTestRay(dropsite + vector3(0.0, 0.0, 200.0), dropsite, -1, -1, 0) -- bitwise flag could also be 17
+            local _, hit, impactCoords = GetShapeTestResult(ray)
+            if hit == 0 or (#((dropsite - vector3(0.0, 0.0, 200.0)) - vector3(impactCoords)) < 10.0) then
+                print("Dropping to given coordinates!")
+                DropCrate(weapon, ammo, dropsite)
+            else
+                print("Unable to drop to given coordinates.") return
+            end
+        else
+            print("Not checking if dropping is possible.")
+            DropCrate(weapon, ammo, dropsite)
+        end
+
+    end)
+end)
+
 function DropCrate(weapon, ammo, coords)
     Citizen.CreateThread(function()
 
@@ -122,12 +151,11 @@ function DropCrate(weapon, ammo, coords)
             Wait(0)
         end
 
-        local playerPed = PlayerPedId()
-        local planeSpawn = vector3(GetOffsetFromEntityInWorldCoords(playerPed, 0.0, -400.0, 500.0)) -- location for plane spawning, should replace it with a system that spawns where the player isn't looking
-        local playerHeading = GetEntityHeading(playerPed)
+        local planeSpawn = coords + vector3(400.0, 0.0, 500.0) -- location for plane spawning, should replace it with a system that spawns where the player isn't looking
+        local heading = 270.0
 
-        local aircraft = CreateVehicle(GetHashKey("cuban800"), planeSpawn, playerHeading, true, true) -- spawn the plane
-        SetEntityHeading(aircraft, playerHeading) -- the plane spawns behind the player facing the same direction as the player
+        local aircraft = CreateVehicle(GetHashKey("cuban800"), planeSpawn, heading, true, true) -- spawn the plane
+        SetEntityHeading(aircraft, heading) -- the plane spawns behind the player facing the same direction as the player
         SetVehicleDoorsLocked(aircraft, 2) -- lock the doors because why not?
         SetEntityDynamic(aircraft, true)
         ActivatePhysics(aircraft)
@@ -143,7 +171,7 @@ function DropCrate(weapon, ammo, coords)
         SetPedRandomComponentVariation(pilot, false)
         SetPedKeepTask(pilot, true)
         SetPlaneMinHeightAboveTerrain(aircraft, 50) -- the plane shouldn't dip below the defined altitude
-        TaskVehicleDriveToCoord(pilot, aircraft, dropsite, 60.0, 0, GetHashKey("cuban800"), 262144, 15.0, -1.0); -- to the dropsite, could be replaced with sequencing
+        TaskVehicleDriveToCoord(pilot, aircraft, coords, 60.0, 0, GetHashKey("cuban800"), 262144, 15.0, -1.0); -- to the dropsite, could be replaced with sequencing
 
         local dropsite = vector2(coords.x, coords.y)
         local planeLocation = vector2(GetEntityCoords(aircraft).x, GetEntityCoords(aircraft).y)
@@ -235,35 +263,6 @@ function DropCrate(weapon, ammo, coords)
         RemoveWeaponAsset(GetHashKey("weapon_flare"))
     end)
 end
-
-RegisterNetEvent("Cratedrop:Execute")
-AddEventHandler("Cratedrop:Execute", function(weapon, ammo, roofCheck, x, y, z)
-    Citizen.CreateThread(function()
-
-        local roofCheck = roofCheck or false -- if roofCheck is true then a check will be performed if a plane can drop a crate to the specified location before actually spawning a plane, if it can't, function won't be called
-        local dropsite
-        if not x or not y or not z or not tonumber(x) or not tonumber(y) or not tonumber(z) then
-            dropsite = vector3(GetOffsetFromEntityInWorldCoords(PlayerPedId(), 0.0, 15.0, 0.0))
-        else
-            dropsite = vector3(x, y, z)
-        end
-
-        if roofCheck then
-            local ray = StartShapeTestRay(dropsite + vector3(0.0, 0.0, 200.0), dropsite, -1, -1, 0) -- bitwise flag could also be 17
-            local _, hit, impactCoords = GetShapeTestResult(ray)
-            if hit == 0 or (#((dropsite - vector3(0.0, 0.0, 200.0)) - vector3(impactCoords)) < 10.0) then
-                print("Dropping to given coordinates!")
-                DropCrate(weapon, ammo, dropsite)
-            else
-                print("Unable to drop to given coordinates.") return
-            end
-        else
-            print("Not checking if dropping is possible.")
-            DropCrate(weapon, ammo, dropsite)
-        end
-
-    end)
-end)
 
 AddEventHandler('onResourceStop', function(resource)
     Citizen.CreateThread(function()
