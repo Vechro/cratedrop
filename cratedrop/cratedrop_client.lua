@@ -153,7 +153,10 @@ function DropCrate(weapon, ammo, coords)
         end
 
         local planeSpawn = coords + vector3(-400.0, 0.0, 500.0) -- location for plane spawning, should replace it with a system that spawns where the player isn't looking
-        local heading = 270.0
+        local dx = coords.x - planeSpawn.x
+        local dy = coords.y - planeSpawn.y
+        local heading = GetHeadingFromVector_2d(dx, dy)
+        print(heading)
 
         aircraft = CreateVehicle(GetHashKey("cuban800"), planeSpawn, heading, true, true) -- spawn the plane
         SetEntityHeading(aircraft, heading) -- the plane spawns behind the player facing the same direction as the player
@@ -179,6 +182,7 @@ function DropCrate(weapon, ammo, coords)
         local planeLocation = vector2(GetEntityCoords(aircraft).x, GetEntityCoords(aircraft).y)
         while not IsEntityDead(pilot) and #(planeLocation - dropsite) > 5.0 do -- wait for when the plane reaches the coords ± 5
             Wait(100)
+            print(#(planeLocation - dropsite))
             planeLocation = vector2(GetEntityCoords(aircraft).x, GetEntityCoords(aircraft).y) -- update plane coords for the loop
         end
 
