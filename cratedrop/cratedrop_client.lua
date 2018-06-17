@@ -62,9 +62,6 @@ local weaponList = {
 
 local pilot, aircraft, parachute, crate, pickup, blip, soundID
 
--- feel free to expand the weaponList, I can't be bothered to add everything there, format is as follows: ["chat command argument"] = "pickup model name"
--- where I got the model names http://web.archive.org/web/20170909034953/http://gtaforums.com/topic/883160-dlc-weapons-pickup-hashes/
-
 -- the next 16 lines add support for Scammer's Universal Menu, it can be removed if it causes any issues
 AddEventHandler("menu:setup", function()
 	TriggerEvent("menu:registerModuleMenu", "Crate Drop", function(id)
@@ -84,7 +81,6 @@ AddEventHandler("menu:setup", function()
 end)
 
 RegisterCommand("drop", function(playerServerID, args, rawString)
-    -- local dropCoords = vector3(GetOffsetFromEntityInWorldCoords(GetPlayerFromServerId(playerServerID), 0.0, 12.5, 200.0))
     local dropCoords = GetOffsetFromEntityInWorldCoords(GetPlayerFromServerId(playerServerID), 0.0, 10.0, 0.0)
     if weaponList[args[1]] == nil then
         if tonumber(args[2]) == nil then
@@ -93,10 +89,10 @@ RegisterCommand("drop", function(playerServerID, args, rawString)
             print("Cratedrop failed: weapon unrecognized, ammo count: " .. args[2])
         end
     elseif weaponList[args[1]] ~= nil and tonumber(args[2]) == nil then
-        TriggerEvent("Cratedrop:Execute", weaponList[args[1]], 250, args[3] or false, args[4] or dropCoords)
+        TriggerEvent("Cratedrop:Execute", weaponList[args[1]], 250, args[3] or false, args[4] or {dropCoords.x, dropCoords.y, dropCoords.z})
         print("Cratedrop succeeded: weapon: " .. args[1] .. ", ammo count unrecognized, defaulting to 250")
     elseif weaponList[args[1]] ~= nil and tonumber(args[2]) ~= nil then
-        TriggerEvent("Cratedrop:Execute", weaponList[args[1]], tonumber(args[2]), args[3] or false, args[4] or dropCoords)
+        TriggerEvent("Cratedrop:Execute", weaponList[args[1]], tonumber(args[2]), args[3] or false, args[4] or {dropCoords.x, dropCoords.y, dropCoords.z})
         print("Cratedrop succeeded: weapon: " .. args[1] .. ", ammo count: " .. args[2])
     end
 end, false)
@@ -105,10 +101,15 @@ RegisterNetEvent("Cratedrop:Execute")
 AddEventHandler("Cratedrop:Execute", function(weapon, ammo, roofCheck, coords)
     Citizen.CreateThread(function()
 
+        print(coords.x)
+        print(coords.y)
+        print(coords.z)
+
         local roofCheck = roofCheck or false -- if roofCheck is true then a check will be performed if a plane can drop a crate to the specified location before actually spawning a plane, if it can't, function won't be called
         local dropsite
-        if not x or not y or not z or not tonumber(x) or not tonumber(y) or not tonumber(z) then
-            dropsite = vector3(GetOffsetFromEntityInWorldCoords(PlayerPedId(), 0.0, 10.0, 0.0))
+        if not coords.x or not coords.y or not coords.z or not tonumber(coords.x) or not tonumber(coords.y) or not tonumber(coords.z) then
+            dropsite = vector3(0.0, 0.0, 72.0)
+            print("Failed interpreting coords, defaulting to 0, 0, 72")
         else
             dropsite = vector3(coords)
         end
@@ -116,7 +117,7 @@ AddEventHandler("Cratedrop:Execute", function(weapon, ammo, roofCheck, coords)
         if roofCheck then
             local ray = StartShapeTestRay(dropsite + vector3(0.0, 0.0, 200.0), dropsite, -1, -1, 0) -- bitwise flag could also be 17
             local _, hit, impactCoords = GetShapeTestResult(ray)
-            if hit == 0 or (#((dropsite - vector3(0.0, 0.0, 200.0)) - vector3(impactCoords)) < 10.0) then
+            if hit == 0 or #((dropsite - vector3(0.0, 0.0, 200.0)) - vector3(impactCoords)) < 10.0 then
                 print("Dropping to given coordinates!")
                 DropCrate(weapon, ammo, dropsite)
             else
@@ -182,7 +183,8 @@ function DropCrate(weapon, ammo, coords)
         local dropsite = vector2(coords.x, coords.y)
         local planeLocation = vector2(GetEntityCoords(aircraft).x, GetEntityCoords(aircraft).y)
         while not IsEntityDead(pilot) and #(planeLocation - dropsite) > 5.0 do -- wait for when the plane reaches the coords ± 5
-            Wait(75)
+            Wait(100)
+            print(#(planeLocation - dropsite))
             planeLocation = vector2(GetEntityCoords(aircraft).x, GetEntityCoords(aircraft).y) -- update plane coords for the loop
         end
 
