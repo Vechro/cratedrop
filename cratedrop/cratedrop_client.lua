@@ -60,7 +60,7 @@ local weaponList = {
     ["marksmanrifle"] = "PICKUP_WEAPON_MARKSMANRIFLE",
 }
 
-local pilot, aircraft, parachute, crate, pickup, blip, soundID
+local dropsite, pilot, aircraft, parachute, crate, pickup, blip, soundID
 
 -- the next 16 lines add support for Scammer's Universal Menu, it can be removed if it causes any issues
 AddEventHandler("menu:setup", function()
@@ -71,7 +71,7 @@ AddEventHandler("menu:setup", function()
 			TriggerEvent("menu:addModuleSubMenu", id, weaponLabel, function(id)
 				for _, ammoAmount in ipairs(ammoAmounts) do
 					TriggerEvent("menu:addModuleItem", id, "Ammo: " .. ammoAmount, nil, false, function()
-                        TriggerEvent("Cratedrop:Execute", weaponName, ammoAmount)
+                        TriggerEvent("crateDrop", weaponName, ammoAmount)
                         TriggerEvent("menu:hideMenu")
 					end)
 				end
@@ -90,42 +90,38 @@ RegisterCommand("drop", function(playerServerID, args, rawString)
             print("Cratedrop failed: weapon unrecognized, ammo count: " .. args[2])
         end
     elseif weaponList[args[1]] ~= nil and tonumber(args[2]) == nil then
-        TriggerEvent("Cratedrop:Execute", weaponList[args[1]], 250, args[3] or false, args[4] or {dropCoords.x, dropCoords.y, dropCoords.z})
+        TriggerEvent("crateDrop", weaponList[args[1]], 250, args[3] or false, args[4] or {["x"] = dropCoords.x, ["y"] = dropCoords.y, ["z"] = dropCoords.z})
         print("Cratedrop succeeded: weapon: " .. args[1] .. ", ammo count unrecognized, defaulting to 250")
     elseif weaponList[args[1]] ~= nil and tonumber(args[2]) ~= nil then
-        TriggerEvent("Cratedrop:Execute", weaponList[args[1]], tonumber(args[2]), args[3] or false, args[4] or {dropCoords.x, dropCoords.y, dropCoords.z})
+        TriggerEvent("crateDrop", weaponList[args[1]], tonumber(args[2]), args[3] or false, args[4] or {["x"] = dropCoords.x, ["y"] = dropCoords.y, ["z"] = dropCoords.z})
         print("Cratedrop succeeded: weapon: " .. args[1] .. ", ammo count: " .. args[2])
     end
 end, false)
 
-RegisterNetEvent("Cratedrop:Execute")
-AddEventHandler("Cratedrop:Execute", function(weapon, ammo, roofCheck, coords)
+RegisterNetEvent("crateDrop")
+AddEventHandler("crateDrop", function(weapon, ammo, roofCheck, coords)
     Citizen.CreateThread(function()
 
-        print(coords.x)
-        print(coords.y)
-        print(coords.z)
-
         local roofCheck = roofCheck or false -- if roofCheck is true then a check will be performed if a plane can drop a crate to the specified location before actually spawning a plane, if it can't, function won't be called
-        local dropsite
+
         if not coords.x or not coords.y or not coords.z or not tonumber(coords.x) or not tonumber(coords.y) or not tonumber(coords.z) then
             dropsite = vector3(0.0, 0.0, 72.0)
             print("Failed interpreting coords, defaulting to 0, 0, 72")
         else
-            dropsite = vector3(coords)
+            dropsite = vector3(coords.x, coords.y, coords.z)
         end
 
         if roofCheck then
             local ray = StartShapeTestRay(dropsite + vector3(0.0, 0.0, 200.0), dropsite, -1, -1, 0) -- bitwise flag could also be 17
             local _, hit, impactCoords = GetShapeTestResult(ray)
             if hit == 0 or #((dropsite - vector3(0.0, 0.0, 200.0)) - vector3(impactCoords)) < 10.0 then
-                print("Dropping to given coordinates!")
+                print("Dropping to given coordinates")
                 DropCrate(weapon, ammo, dropsite)
             else
-                print("Unable to drop to given coordinates.") return
+                print("Unable to drop to given coordinates") return
             end
         else
-            print("Not checking if dropping is possible.")
+            print("Not checking if dropping is possible")
             DropCrate(weapon, ammo, dropsite)
         end
 
@@ -134,8 +130,6 @@ end)
 
 function DropCrate(weapon, ammo, coords)
     Citizen.CreateThread(function()
-
-        print(coords)
 
         local requiredModels = {"p_cargo_chute_s", "ex_prop_adv_case_sm", "cuban800", "s_m_m_pilot_02", "prop_box_wood02a_pu", "prop_flare_01"} -- parachute, pickup case, plane, pilot, crate, flare
 
@@ -185,7 +179,6 @@ function DropCrate(weapon, ammo, coords)
         local planeLocation = vector2(GetEntityCoords(aircraft).x, GetEntityCoords(aircraft).y)
         while not IsEntityDead(pilot) and #(planeLocation - dropsite) > 5.0 do -- wait for when the plane reaches the coords ± 5
             Wait(100)
-            print(#(planeLocation - dropsite))
             planeLocation = vector2(GetEntityCoords(aircraft).x, GetEntityCoords(aircraft).y) -- update plane coords for the loop
         end
 
@@ -282,7 +275,7 @@ AddEventHandler('onResourceStop', function(resource)
             SetEntityAsMissionEntity(pilot, false, true)
             DeleteEntity(pilot)
             SetEntityAsMissionEntity(aircraft, false, true)
-            DeleteEntity(aircraft)
+            DeleteEntity(aircraft) -- literally doesn't work
             ]]
             SetEntityAsNoLongerNeeded(pilot) 
             SetEntityAsNoLongerNeeded(aircraft)
