@@ -154,7 +154,7 @@ function DropCrate(weapon, ammo, coords)
         local planeSpawn = coords + vector3(400.0, 0.0, 500.0) -- location for plane spawning, should replace it with a system that spawns where the player isn't looking
         local heading = 270.0
 
-        local aircraft = CreateVehicle(GetHashKey("cuban800"), planeSpawn, heading, true, true) -- spawn the plane
+        aircraft = CreateVehicle(GetHashKey("cuban800"), planeSpawn, heading, true, true) -- spawn the plane
         SetEntityHeading(aircraft, heading) -- the plane spawns behind the player facing the same direction as the player
         SetVehicleDoorsLocked(aircraft, 2) -- lock the doors because why not?
         SetEntityDynamic(aircraft, true)
@@ -166,7 +166,7 @@ function DropCrate(weapon, ammo, coords)
         OpenBombBayDoors(aircraft) -- opens the hatch below the plane for added realism
         SetEntityProofs(aircraft, true, false, true, false, false, false, false, false)
 
-        local pilot = CreatePedInsideVehicle(aircraft, 1, GetHashKey("s_m_m_pilot_02"), -1, true, true) -- put the pilot in the plane
+        pilot = CreatePedInsideVehicle(aircraft, 1, GetHashKey("s_m_m_pilot_02"), -1, true, true) -- put the pilot in the plane
         SetBlockingOfNonTemporaryEvents(pilot, true) -- ignore explosions and other shocking events
         SetPedRandomComponentVariation(pilot, false)
         SetPedKeepTask(pilot, true)
@@ -190,7 +190,7 @@ function DropCrate(weapon, ammo, coords)
 
         local crateSpawn = vector3(GetOffsetFromEntityInWorldCoords(aircraft, 0.0, 0.0, -5.0))
 
-        local crate = CreateObject(GetHashKey("prop_box_wood02a_pu"), crateSpawn, true, true, true) -- a breakable crate to be spawned directly under the plane, probably could be spawned closer to the plane
+        crate = CreateObject(GetHashKey("prop_box_wood02a_pu"), crateSpawn, true, true, true) -- a breakable crate to be spawned directly under the plane, probably could be spawned closer to the plane
         SetEntityLodDist(crate, 1000) -- so we can see it from the distance
         ActivatePhysics(crate)
         SetDamping(crate, 2, 0.1) -- no idea but Rockstar uses it
@@ -202,15 +202,15 @@ function DropCrate(weapon, ammo, coords)
         -- PlayEntityAnim(parachute, "P_cargo_chute_S_deploy", "P_cargo_chute_S", 1000.0, false, false, false, 0, 0) -- disabled since animations don't work
         -- ForceEntityAiAndAnimationUpdate(parachute) -- pointless if animations aren't working
 
-        local pickup = CreateAmbientPickup(GetHashKey(weapon), crateSpawn, 0, ammo, GetHashKey("ex_prop_adv_case_sm"), true, true) -- we make the pickup, location doesn't matter too much, we're attaching it later
+        pickup = CreateAmbientPickup(GetHashKey(weapon), crateSpawn, 0, ammo, GetHashKey("ex_prop_adv_case_sm"), true, true) -- we make the pickup, location doesn't matter too much, we're attaching it later
         ActivatePhysics(pickup)
         SetDamping(pickup, 2, 0.0245)
         SetEntityVelocity(pickup, 0.0, 0.0, -0.2) -- I think this makes the crate drop down, not sure if it's needed as many times in the script as I'm using
 
-        local soundID = GetSoundId() -- we need a sound ID for calling the native below, otherwise we won't be able to stop the sound later
+        soundID = GetSoundId() -- we need a sound ID for calling the native below, otherwise we won't be able to stop the sound later
         PlaySoundFromEntity(soundID, "Crate_Beeps", pickup, "MP_CRATE_DROP_SOUNDS", true, 0) -- crate beep sound emitted from the pickup
 
-        local blip = AddBlipForEntity(pickup) -- Rockstar did the blip exactly like this
+        blip = AddBlipForEntity(pickup) -- Rockstar did the blip exactly like this
         SetBlipSprite(blip, 351) -- 408 also works, supposedly the same blip but bigger and more detailed?
         SetBlipNameFromTextFile(blip, "AMD_BLIPN")
         SetBlipScale(blip, 0.7)
@@ -268,8 +268,10 @@ AddEventHandler('onResourceStop', function(resource)
     Citizen.CreateThread(function()
         if resource == GetCurrentResourceName() then
 
-            DeleteEntity(pilot)
-            DeleteEntity(aircraft)
+            SetEntityAsMissionEntity(pilot)
+            DeletePed(pilot)
+            SetEntityAsMissionEntity(aircraft)
+            DeleteVehicle(aircraft)
             DeleteEntity(parachute)
             DeleteEntity(crate)
             
