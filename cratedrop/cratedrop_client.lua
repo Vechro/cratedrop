@@ -81,7 +81,8 @@ AddEventHandler("menu:setup", function()
 	end, false)
 end)
 
-RegisterCommand("drop", function(source,args,raw)
+RegisterCommand("drop", function(playerServerID, args, rawString)
+    -- local dropCoords = vector3(GetOffsetFromEntityInWorldCoords(GetPlayerFromServerId(playerServerID), 0.0, 12.5, 200.0))
     if weaponList[args[1]] == nil then
         if tonumber(args[2]) == nil then
             print("Cratedrop failed: weapon and ammo count unrecognized")
@@ -97,10 +98,15 @@ RegisterCommand("drop", function(source,args,raw)
     end
 end, false)
 
-RegisterNetEvent("Cratedrop:Execute")
--- make ammo stay within -1 and 9999
-AddEventHandler("Cratedrop:Execute", function(weapon, ammo)
+RegisterCommand("droptest", function(playerServerID, args, rawString)
+    -- local dropCoords = vector3(GetOffsetFromEntityInWorldCoords(GetPlayerFromServerId(playerServerID), 0.0, 12.5, 200.0))
+        TriggerEvent("Cratedrop:Execute", weaponList["musket"], tonumber("1"), true, "f")
+        print("Cratedrop succeeded: weapon: musket, ammo count: 1, nil coords and roofcheck is true")
+end, false)
+
+function DropCrate(weapon, ammo, coords)
     Citizen.CreateThread(function()
+
         local requiredModels = {"p_cargo_chute_s", "ex_prop_adv_case_sm", "cuban800", "s_m_m_pilot_02", "prop_box_wood02a_pu", "prop_flare_01"} -- parachute, pickup case, plane, pilot, crate, flare
 
         for i = 1, #requiredModels do
@@ -123,7 +129,7 @@ AddEventHandler("Cratedrop:Execute", function(weapon, ammo)
         end
 
         local playerPed = PlayerPedId()
-        local dropsite = vector3(GetOffsetFromEntityInWorldCoords(playerPed, 0.0, 12.5, 200)) -- location where to drop the crate
+        -- local dropsite = (coordTable and vector3(coordTable)) or vector3(GetOffsetFromEntityInWorldCoords(playerPed, 0.0, 12.5, 200.0))
         local planeSpawn = vector3(GetOffsetFromEntityInWorldCoords(playerPed, 0.0, -400.0, 500.0)) -- location for plane spawning, should replace it with a system that spawns where the player isn't looking
         local playerHeading = GetEntityHeading(playerPed)
 
@@ -146,7 +152,7 @@ AddEventHandler("Cratedrop:Execute", function(weapon, ammo)
         SetPlaneMinHeightAboveTerrain(aircraft, 50) -- the plane shouldn't dip below the defined altitude
         TaskVehicleDriveToCoord(pilot, aircraft, dropsite, 60.0, 0, GetHashKey("cuban800"), 262144, 15.0, -1.0); -- to the dropsite, could be replaced with sequencing
 
-        local dropsite = vector2(dropsite.x, dropsite.y)
+        local dropsite = vector2(coords.x, coords.y)
         local planeLocation = vector2(GetEntityCoords(aircraft).x, GetEntityCoords(aircraft).y)
         while not IsEntityDead(pilot) and #(planeLocation - dropsite) > 5.0 do -- wait for when the plane reaches the coords ± 5
             Wait(50)
@@ -235,6 +241,49 @@ AddEventHandler("Cratedrop:Execute", function(weapon, ammo)
         end
 
         RemoveWeaponAsset(GetHashKey("weapon_flare"))
+    end)
+end
+
+RegisterNetEvent("Cratedrop:Execute")
+-- should make ammo stay within -1 and 9999
+AddEventHandler("Cratedrop:Execute", function(weapon, ammo, roofCheck, x, y, z)
+    Citizen.CreateThread(function()
+
+        local roofCheck = roofCheck or false -- if roofCheck is true then a check will be performed if a plane can drop a crate to the specified location before actually spawning a plane, if it can't, function won't be called
+        -- local playerPed = PlayerPedId() -- location where to drop the crate
+        -- local coordTable = coordTable or GetOffsetFromEntityInWorldCoords(playerPed, 0.0, 12.5, 200.0)
+        -- local dropsite = (coordTable and vector3(coordTable)) or vector3(GetOffsetFromEntityInWorldCoords(playerPed, 0.0, 12.5, 200.0))
+        -- print("coordTable: " .. tostring(coordTable))
+        local dropsite
+        if not x or not y or not z or not tonumber(x) or not tonumber(y) or not tonumber(z) then
+            dropsite = vector3(GetOffsetFromEntityInWorldCoords(PlayerPedId(), 0.0, 15.0, 0.0))
+        else
+            dropsite = vector3(x, y, z)
+        end
+
+        if roofCheck then
+            local ray = StartShapeTestRay(dropsite + vector3(0.0, 0.0, 200.0), dropsite, -1, -1, 0) -- bitwise flag could also be 17
+            local _, hit, impactCoords = GetShapeTestResult(ray)
+            --[[
+            print(tostring("hitBoolean: " .. hit))
+            print(tostring("dropsite: " .. dropsite))
+            print(tostring("dropsite -200: " .. dropsite - vector3(0.0, 0.0, 200.0)))
+            print(tostring("impactCoords: " .. vector3(impactCoords)))
+            print(tostring("PedCoords: " .. GetEntityCoords(playerPed)))
+            print(tostring("ForwardVector: " .. GetEntityForwardVector(playerPed)))
+            print(tostring("offset: " .. GetOffsetFromEntityInWorldCoords(playerPed, 0.0, 12.5, 0.0)))
+            print(tostring("offset2: " .. (GetEntityCoords(playerPed) + GetEntityForwardVector(playerPed) * 12.5)))
+            -]]
+            if hit == 0 or (#((dropsite - vector3(0.0, 0.0, 200.0)) - vector3(impactCoords)) < 10.0) then
+                print("roofcheck success!")
+                DropCrate(weapon, ammo, dropsite)
+            else
+                print("no room for a drop, you dip!") return
+            end
+        else
+            print("roofcheck skipped")
+            DropCrate(weapon, ammo, dropsite)
+        end
 
     end)
 end)
@@ -247,7 +296,8 @@ AddEventHandler('onResourceStop', function(resource)
             DeleteEntity(aircraft)
             DeleteEntity(parachute)
             DeleteEntity(crate)
-            DeleteEntity(pickup)
+            
+            RemovePickup(pickup)
 
             RemoveBlip(blip)
 
