@@ -60,6 +60,8 @@ local weaponList = {
     ["marksmanrifle"] = "PICKUP_WEAPON_MARKSMANRIFLE",
 }
 
+local pilot, aircraft, parachute, crate, pickup, blip, soundID
+
 -- feel free to expand the weaponList, I can't be bothered to add everything there, format is as follows: ["chat command argument"] = "pickup model name"
 -- where I got the model names http://web.archive.org/web/20170909034953/http://gtaforums.com/topic/883160-dlc-weapons-pickup-hashes/
 
@@ -83,6 +85,7 @@ end)
 
 RegisterCommand("drop", function(playerServerID, args, rawString)
     -- local dropCoords = vector3(GetOffsetFromEntityInWorldCoords(GetPlayerFromServerId(playerServerID), 0.0, 12.5, 200.0))
+    local dropCoords = GetOffsetFromEntityInWorldCoords(GetPlayerFromServerId(playerServerID), 0.0, 10.0, 0.0)
     if weaponList[args[1]] == nil then
         if tonumber(args[2]) == nil then
             print("Cratedrop failed: weapon and ammo count unrecognized")
@@ -90,24 +93,24 @@ RegisterCommand("drop", function(playerServerID, args, rawString)
             print("Cratedrop failed: weapon unrecognized, ammo count: " .. args[2])
         end
     elseif weaponList[args[1]] ~= nil and tonumber(args[2]) == nil then
-        TriggerEvent("Cratedrop:Execute", weaponList[args[1]], 250, args[3] or false, args[4] or false, args[5] or false, args[6] or false)
+        TriggerEvent("Cratedrop:Execute", weaponList[args[1]], 250, args[3] or false, args[4] or dropCoords)
         print("Cratedrop succeeded: weapon: " .. args[1] .. ", ammo count unrecognized, defaulting to 250")
     elseif weaponList[args[1]] ~= nil and tonumber(args[2]) ~= nil then
-        TriggerEvent("Cratedrop:Execute", weaponList[args[1]], tonumber(args[2]), args[3] or false, args[4] or false, args[5] or false, args[6] or false)
+        TriggerEvent("Cratedrop:Execute", weaponList[args[1]], tonumber(args[2]), args[3] or false, args[4] or dropCoords)
         print("Cratedrop succeeded: weapon: " .. args[1] .. ", ammo count: " .. args[2])
     end
 end, false)
 
 RegisterNetEvent("Cratedrop:Execute")
-AddEventHandler("Cratedrop:Execute", function(weapon, ammo, roofCheck, x, y, z)
+AddEventHandler("Cratedrop:Execute", function(weapon, ammo, roofCheck, coords)
     Citizen.CreateThread(function()
 
         local roofCheck = roofCheck or false -- if roofCheck is true then a check will be performed if a plane can drop a crate to the specified location before actually spawning a plane, if it can't, function won't be called
         local dropsite
         if not x or not y or not z or not tonumber(x) or not tonumber(y) or not tonumber(z) then
-            dropsite = vector3(GetOffsetFromEntityInWorldCoords(PlayerPedId(), 0.0, 15.0, 0.0))
+            dropsite = vector3(GetOffsetFromEntityInWorldCoords(PlayerPedId(), 0.0, 10.0, 0.0))
         else
-            dropsite = vector3(x, y, z)
+            dropsite = vector3(coords)
         end
 
         if roofCheck then
@@ -130,6 +133,8 @@ end)
 function DropCrate(weapon, ammo, coords)
     Citizen.CreateThread(function()
 
+        print(coords)
+
         local requiredModels = {"p_cargo_chute_s", "ex_prop_adv_case_sm", "cuban800", "s_m_m_pilot_02", "prop_box_wood02a_pu", "prop_flare_01"} -- parachute, pickup case, plane, pilot, crate, flare
 
         for i = 1, #requiredModels do
@@ -151,7 +156,7 @@ function DropCrate(weapon, ammo, coords)
             Wait(0)
         end
 
-        local planeSpawn = coords + vector3(400.0, 0.0, 500.0) -- location for plane spawning, should replace it with a system that spawns where the player isn't looking
+        local planeSpawn = coords + vector3(-400.0, 0.0, 500.0) -- location for plane spawning, should replace it with a system that spawns where the player isn't looking
         local heading = 270.0
 
         aircraft = CreateVehicle(GetHashKey("cuban800"), planeSpawn, heading, true, true) -- spawn the plane
@@ -171,12 +176,13 @@ function DropCrate(weapon, ammo, coords)
         SetPedRandomComponentVariation(pilot, false)
         SetPedKeepTask(pilot, true)
         SetPlaneMinHeightAboveTerrain(aircraft, 50) -- the plane shouldn't dip below the defined altitude
-        TaskVehicleDriveToCoord(pilot, aircraft, coords, 60.0, 0, GetHashKey("cuban800"), 262144, 15.0, -1.0); -- to the dropsite, could be replaced with sequencing
+
+        TaskVehicleDriveToCoord(pilot, aircraft, coords + vector3(0.0, 0.0, 500.0), 60.0, 0, GetHashKey("cuban800"), 262144, 15.0, -1.0); -- to the dropsite, could be replaced with sequencing
 
         local dropsite = vector2(coords.x, coords.y)
         local planeLocation = vector2(GetEntityCoords(aircraft).x, GetEntityCoords(aircraft).y)
         while not IsEntityDead(pilot) and #(planeLocation - dropsite) > 5.0 do -- wait for when the plane reaches the coords ± 5
-            Wait(50)
+            Wait(75)
             planeLocation = vector2(GetEntityCoords(aircraft).x, GetEntityCoords(aircraft).y) -- update plane coords for the loop
         end
 
@@ -188,7 +194,8 @@ function DropCrate(weapon, ammo, coords)
         SetEntityAsNoLongerNeeded(pilot) 
         SetEntityAsNoLongerNeeded(aircraft)
 
-        local crateSpawn = vector3(GetOffsetFromEntityInWorldCoords(aircraft, 0.0, 0.0, -5.0))
+        -- local crateSpawn = vector3(GetOffsetFromEntityInWorldCoords(aircraft, 0.0, 0.0, -5.0))
+        local crateSpawn = vector3(coords.x, coords.y, GetEntityCoords(aircraft).z - 5.0) -- crate will drop to the exact position as planned, not at the plane's current position
 
         crate = CreateObject(GetHashKey("prop_box_wood02a_pu"), crateSpawn, true, true, true) -- a breakable crate to be spawned directly under the plane, probably could be spawned closer to the plane
         SetEntityLodDist(crate, 1000) -- so we can see it from the distance
@@ -211,7 +218,7 @@ function DropCrate(weapon, ammo, coords)
         PlaySoundFromEntity(soundID, "Crate_Beeps", pickup, "MP_CRATE_DROP_SOUNDS", true, 0) -- crate beep sound emitted from the pickup
 
         blip = AddBlipForEntity(pickup) -- Rockstar did the blip exactly like this
-        SetBlipSprite(blip, 351) -- 408 also works, supposedly the same blip but bigger and more detailed?
+        SetBlipSprite(blip, 408) -- 351 or 408 are both fine, 408 is just bigger
         SetBlipNameFromTextFile(blip, "AMD_BLIPN")
         SetBlipScale(blip, 0.7)
         SetBlipColour(blip, 2)
@@ -268,17 +275,18 @@ AddEventHandler('onResourceStop', function(resource)
     Citizen.CreateThread(function()
         if resource == GetCurrentResourceName() then
 
-            SetEntityAsMissionEntity(pilot)
-            DeletePed(pilot)
-            SetEntityAsMissionEntity(aircraft)
-            DeleteVehicle(aircraft)
+            --[[
+            SetEntityAsMissionEntity(pilot, false, true)
+            DeleteEntity(pilot)
+            SetEntityAsMissionEntity(aircraft, false, true)
+            DeleteEntity(aircraft)
+            ]]
+            SetEntityAsNoLongerNeeded(pilot) 
+            SetEntityAsNoLongerNeeded(aircraft)
             DeleteEntity(parachute)
             DeleteEntity(crate)
-            
             RemovePickup(pickup)
-
             RemoveBlip(blip)
-
             StopSound(soundID)
             ReleaseSoundId(soundID)
 
