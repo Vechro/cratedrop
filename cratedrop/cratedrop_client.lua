@@ -81,7 +81,8 @@ AddEventHandler("menu:setup", function()
 end)
 
 RegisterCommand("drop", function(playerServerID, args, rawString)
-    local dropCoords = GetOffsetFromEntityInWorldCoords(GetPlayerFromServerId(playerServerID), 0.0, 10.0, 0.0)
+    local dropCoords = GetOffsetFromEntityInWorldCoords(PlayerPedId(), 0.0, 10.0, 0.0)
+    print("dropCoords.x: " .. dropCoords.x)
     if weaponList[args[1]] == nil then
         if tonumber(args[2]) == nil then
             print("Cratedrop failed: weapon and ammo count unrecognized")
