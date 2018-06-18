@@ -83,21 +83,22 @@ end)
 
 RegisterCommand("drop", function(playerServerID, args, rawString)
     local dropCoords = GetOffsetFromEntityInWorldCoords(PlayerPedId(), 0.0, 10.0, 0.0)
-    TriggerEvent("crateDrop", args[1], tonumber(args[2]), args[3] or false, {["x"] = args[4], ["y"] = args[5], ["z"] = args[6]} or {["x"] = dropCoords.x, ["y"] = dropCoords.y, ["z"] = dropCoords.z})
+    TriggerEvent("crateDrop", args[1], tonumber(args[2]), args[3] or false, args[4], {["x"] = args[5] or dropCoords.x, ["y"] = args[6] or dropCoords.y, ["z"] = args[7] or dropCoords.z})
 end, false)
 
 RegisterNetEvent("crateDrop")
 
-AddEventHandler("crateDrop", function(weapon, ammo, roofCheck, dropCoords)
+AddEventHandler("crateDrop", function(weapon, ammo, roofCheck, planeSpawnDistance, dropCoords)
     Citizen.CreateThread(function()
 
         if IsWeaponValid(GetHashKey(weapon)) then
             weapon = "pickup_" .. weapon
+            print("WEAPON VALIDITY: true")
         elseif IsWeaponValid(GetHashKey("weapon_" .. weapon)) then
             weapon = "pickup_weapon_" .. weapon
+            print("WEAPON VALIDITY: true")
         else
-            print("Pickup name invalid")
-            return
+            print("WEAPON VALIDITY: unknown") -- no way of knowing if it's a proper pickup name or not, but the script will roll with it
         end
 
         print("WEAPON: " .. weapon)
@@ -113,31 +114,32 @@ AddEventHandler("crateDrop", function(weapon, ammo, roofCheck, dropCoords)
 
         if not dropCoords.x or not dropCoords.y or not dropCoords.z or not tonumber(dropCoords.x) or not tonumber(dropCoords.y) or not tonumber(dropCoords.z) then
             dropsite = vector3(0.0, 0.0, 72.0)
-            print("Failed interpreting dropCoords, defaulting to X = 0; Y = 0")
+            print("DROP COORDS: failed, defaulting to X = 0; Y = 0")
         else
             dropsite = vector3(dropCoords.x, dropCoords.y, dropCoords.z)
+            print("DROP COORDS: success, X = %.4f; Y = %.4f; Z = %.4f"):format(dropCoords.x, dropCoords.y, dropCoords.z)
         end
 
         if roofCheck and not roofCheck == "false" then  -- if roofCheck is not false then a check will be performed if a plane can drop a crate to the specified location before actually spawning a plane, if it can't, function won't be called
             print("ROOFCHECK: true")
-            local ray = StartShapeTestRay(dropsite + vector3(0.0, 0.0, 200.0), dropsite, -1, -1, 0) -- bitwise flag could also be 17
+            local ray = StartShapeTestRay(dropsite + vector3(0.0, 0.0, 200.0), dropsite, -1, -1, 0)
             local _, hit, impactCoords = GetShapeTestResult(ray)
-            if hit == 0 or #((dropsite - vector3(0.0, 0.0, 200.0)) - vector3(impactCoords)) < 10.0 then
-                print("ROOFCHECK: passed")
-                DropCrate(weapon, ammo, dropsite)
+            if hit == 0 or #((dropsite - vector3(0.0, 0.0, 200.0)) - vector3(impactCoords)) < 10.0 then -- ± 10 units
+                print("ROOFCHECK: success")
+                DropCrate(weapon, ammo, planeSpawnDistance, dropsite)
             else
                 print("ROOFCHECK: failed")
                 return
             end
         else
             print("ROOFCHECK: false")
-            DropCrate(weapon, ammo, dropsite)
+            DropCrate(weapon, ammo, planeSpawnDistance, dropsite)
         end
 
     end)
 end)
 
-function DropCrate(weapon, ammo, dropCoords, planeSpawnDistance)
+function DropCrate(weapon, ammo, planeSpawnDistance, dropCoords)
     Citizen.CreateThread(function()
 
         local requiredModels = {"p_cargo_chute_s", "ex_prop_adv_case_sm", "cuban800", "s_m_m_pilot_02", "prop_box_wood02a_pu", "prop_flare_01"} -- parachute, pickup case, plane, pilot, crate, flare
@@ -166,8 +168,8 @@ function DropCrate(weapon, ammo, dropCoords, planeSpawnDistance)
         local theta = (rHeading / 180.0) * 3.14
         local rPlaneSpawn = dropCoords - vector3(math.cos(theta) * planeSpawnDistance, math.sin(theta) * planeSpawnDistance, -500.0)
 
-        print("rPlaneSpawn: " .. rPlaneSpawn)
-        print("rPlaneSpawn distance: " .. #(vector2(rPlaneSpawn.x, rPlaneSpawn.y) - vector2(dropCoords.x, dropCoords.y)))
+        print("PLANE COORDS: X = %.4f; Y = %.4f; Z = %.4f"):format(rPlaneSpawn.x, rPlaneSpawn.y, rPlaneSpawn.z)
+        -- print("rPlaneSpawn distance: " .. #(vector2(rPlaneSpawn.x, rPlaneSpawn.y) - vector2(dropCoords.x, dropCoords.y)))
 
         local dx = dropCoords.x - rPlaneSpawn.x
         local dy = dropCoords.y - rPlaneSpawn.y
