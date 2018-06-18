@@ -1,3 +1,4 @@
+--[[
 local weaponList = {
     ["pistol"] = "PICKUP_WEAPON_PISTOL",
     ["combatpistol"] = "PICKUP_WEAPON_COMBATPISTOL",
@@ -59,7 +60,7 @@ local weaponList = {
     ["heavysniper"] = "PICKUP_WEAPON_HEAVYSNIPER",
     ["marksmanrifle"] = "PICKUP_WEAPON_MARKSMANRIFLE",
 }
-
+]]
 local dropsite, pilot, aircraft, parachute, crate, pickup, blip, soundID
 
 -- the next 16 lines add support for Scammer's Universal Menu, it can be removed if it causes any issues
@@ -82,19 +83,7 @@ end)
 
 RegisterCommand("drop", function(playerServerID, args, rawString)
     local dropCoords = GetOffsetFromEntityInWorldCoords(PlayerPedId(), 0.0, 10.0, 0.0)
-    if weaponList[args[1]] == nil then
-        if tonumber(args[2]) == nil then
-            print("Cratedrop failed: weapon and ammo count unrecognized")
-        else
-            print("Cratedrop failed: weapon unrecognized, ammo count: " .. args[2])
-        end
-    elseif weaponList[args[1]] ~= nil and tonumber(args[2]) == nil then
-        TriggerEvent("crateDrop", weaponList[args[1]], 250, args[3] or false, args[4] or {["x"] = dropCoords.x, ["y"] = dropCoords.y, ["z"] = dropCoords.z})
-        print("Cratedrop succeeded: weapon: " .. args[1] .. ", ammo count unrecognized, defaulting to 250")
-    elseif weaponList[args[1]] ~= nil and tonumber(args[2]) ~= nil then
-        TriggerEvent("crateDrop", weaponList[args[1]], tonumber(args[2]), args[3] or false, args[4] or {["x"] = dropCoords.x, ["y"] = dropCoords.y, ["z"] = dropCoords.z})
-        print("Cratedrop succeeded: weapon: " .. args[1] .. ", ammo count: " .. args[2])
-    end
+    TriggerEvent("crateDrop", args[1], tonumber(args[2]), args[3] or false, {["x"] = args[4], ["y"] = args[5], ["z"] = args[6]} or {["x"] = dropCoords.x, ["y"] = dropCoords.y, ["z"] = dropCoords.z})
 end, false)
 
 RegisterNetEvent("crateDrop")
@@ -124,7 +113,6 @@ AddEventHandler("crateDrop", function(weapon, ammo, roofCheck, dropCoords)
 
         print("AMMO: " .. ammo)
 
-        local roofCheck = roofCheck or false -- if roofCheck is true then a check will be performed if a plane can drop a crate to the specified location before actually spawning a plane, if it can't, function won't be called
         if not dropCoords.x or not dropCoords.y or not dropCoords.z or not tonumber(dropCoords.x) or not tonumber(dropCoords.y) or not tonumber(dropCoords.z) then
             dropsite = vector3(0.0, 0.0, 72.0)
             print("Failed interpreting dropCoords, defaulting to X = 0; Y = 0")
@@ -132,17 +120,21 @@ AddEventHandler("crateDrop", function(weapon, ammo, roofCheck, dropCoords)
             dropsite = vector3(dropCoords.x, dropCoords.y, dropCoords.z)
         end
 
+        local roofCheck = roofCheck or false -- if roofCheck is true then a check will be performed if a plane can drop a crate to the specified location before actually spawning a plane, if it can't, function won't be called
+
         if roofCheck then
+            print("ROOFCHECK: true")
             local ray = StartShapeTestRay(dropsite + vector3(0.0, 0.0, 200.0), dropsite, -1, -1, 0) -- bitwise flag could also be 17
             local _, hit, impactCoords = GetShapeTestResult(ray)
             if hit == 0 or #((dropsite - vector3(0.0, 0.0, 200.0)) - vector3(impactCoords)) < 10.0 then
-                print("Dropping to given coordinates")
+                print("ROOFCHECK: passed")
                 DropCrate(weapon, ammo, dropsite)
             else
-                print("Unable to drop to given coordinates") return
+                print("ROOFCHECK: failed")
+                return
             end
         else
-            print("Not checking if dropping is possible")
+            print("ROOFCHECK: false")
             DropCrate(weapon, ammo, dropsite)
         end
 
