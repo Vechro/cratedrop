@@ -99,16 +99,16 @@ RegisterCommand("drop", function(playerServerID, args, rawString)
 end, false)
 
 RegisterNetEvent("crateDrop")
-AddEventHandler("crateDrop", function(weapon, ammo, roofCheck, coords)
+AddEventHandler("crateDrop", function(weapon, ammo, roofCheck, dropCoords)
     Citizen.CreateThread(function()
 
         local roofCheck = roofCheck or false -- if roofCheck is true then a check will be performed if a plane can drop a crate to the specified location before actually spawning a plane, if it can't, function won't be called
 
-        if not coords.x or not coords.y or not coords.z or not tonumber(coords.x) or not tonumber(coords.y) or not tonumber(coords.z) then
+        if not dropCoords.x or not dropCoords.y or not dropCoords.z or not tonumber(dropCoords.x) or not tonumber(dropCoords.y) or not tonumber(dropCoords.z) then
             dropsite = vector3(0.0, 0.0, 72.0)
-            print("Failed interpreting coords, defaulting to 0, 0, 72")
+            print("Failed interpreting dropCoords, defaulting to 0, 0, 72")
         else
-            dropsite = vector3(coords.x, coords.y, coords.z)
+            dropsite = vector3(dropCoords.x, dropCoords.y, dropCoords.z)
         end
 
         if roofCheck then
@@ -128,7 +128,7 @@ AddEventHandler("crateDrop", function(weapon, ammo, roofCheck, coords)
     end)
 end)
 
-function DropCrate(weapon, ammo, coords)
+function DropCrate(weapon, ammo, dropCoords, planeSpawnDistance)
     Citizen.CreateThread(function()
 
         local requiredModels = {"p_cargo_chute_s", "ex_prop_adv_case_sm", "cuban800", "s_m_m_pilot_02", "prop_box_wood02a_pu", "prop_flare_01"} -- parachute, pickup case, plane, pilot, crate, flare
@@ -152,27 +152,26 @@ function DropCrate(weapon, ammo, coords)
             Wait(0)
         end
 
-        local planeSpawn = coords + vector3(-400.0, 0.0, 500.0) -- location for plane spawning
+        local planeSpawn = dropCoords + vector3(-400.0, 0.0, 500.0) -- location for plane spawning
 
-        rHeading = math.random(0, 360) + 0.0
-        radius = 400.0
+        local rHeading = math.random(0, 360) + 0.0
+        local planeSpawnDistance = (planeSpawnDistance and tonumber(planeSpawnDistance)) or 400.0
 
-        theta = (rHeading / 180.0) * math.pi
+        -- local theta = (rHeading / 180.0) * math.pi -- might work well enough with just 3.1416
+        local theta = (rHeading / 180.0) * math.pi -- might work well enough with just 3.1416
 
-        tx = math.cos(theta) * radius
-        ty = math.sin(theta) * radius
-
-        rPlaneSpawn = vector3(coords.x - (math.cos(theta) * radius), coords.y - (math.sin(theta) * radius), 500.0)
+        -- local rPlaneSpawn = vector3(dropCoords.x - (math.cos(theta) * planeSpawnDistance), dropCoords.y - (math.sin(theta) * planeSpawnDistance), dropCoords.z + 500.0)
+        local rPlaneSpawn = vector3(dropCoords) - vector3(math.cos(theta) * planeSpawnDistance, math.sin(theta) * planeSpawnDistance, -500.0) -- two negatives make a positive, right?
 
         print("rPlaneSpawn: " .. rPlaneSpawn)
-        print("rPlaneSpawn distance: " .. #(rPlaneSpawn - coords))
+        print("rPlaneSpawn distance: " .. #(vector2(rPlaneSpawn.x, rPlaneSpawn.y) - vector2(dropCoords.x, dropCoords.y)))
 
-        local dx = coords.x - planeSpawn.x
-        local dy = coords.y - planeSpawn.y
+        local dx = dropCoords.x - rPlaneSpawn.x
+        local dy = dropCoords.y - rPlaneSpawn.y
         local heading = GetHeadingFromVector_2d(dx, dy) -- determine plane heading from coordinates
 
-        aircraft = CreateVehicle(GetHashKey("cuban800"), rPlaneSpawn, heading, true, true) -- spawn the plane
-        SetEntityHeading(aircraft, heading) -- the plane spawns behind the player facing the same direction as the player
+        aircraft = CreateVehicle(GetHashKey("cuban800"), rPlaneSpawn, heading, true, true) -- spawn the plane, FIX THE HEADING
+        SetEntityHeading(aircraft, heading) -- the plane spawns behind the player facing the same direction as the player, FIX THE HEADING
         SetVehicleDoorsLocked(aircraft, 2) -- lock the doors because why not?
         SetEntityDynamic(aircraft, true)
         ActivatePhysics(aircraft)
@@ -189,11 +188,11 @@ function DropCrate(weapon, ammo, coords)
         SetPedKeepTask(pilot, true)
         SetPlaneMinHeightAboveTerrain(aircraft, 50) -- the plane shouldn't dip below the defined altitude
 
-        TaskVehicleDriveToCoord(pilot, aircraft, coords + vector3(0.0, 0.0, 500.0), 60.0, 0, GetHashKey("cuban800"), 262144, 15.0, -1.0); -- to the dropsite, could be replaced with a task sequence
+        TaskVehicleDriveToCoord(pilot, aircraft, dropCoords + vector3(0.0, 0.0, 500.0), 60.0, 0, GetHashKey("cuban800"), 262144, 15.0, -1.0) -- to the dropsite, could be replaced with a task sequence
 
-        local dropsite = vector2(coords.x, coords.y)
+        local dropsite = vector2(dropCoords.x, dropCoords.y)
         local planeLocation = vector2(GetEntityCoords(aircraft).x, GetEntityCoords(aircraft).y)
-        while not IsEntityDead(pilot) and #(planeLocation - dropsite) > 5.0 do -- wait for when the plane reaches the coords ± 5
+        while not IsEntityDead(pilot) and #(planeLocation - dropsite) > 5.0 do -- wait for when the plane reaches the dropCoords ± 5 units
             Wait(100)
             planeLocation = vector2(GetEntityCoords(aircraft).x, GetEntityCoords(aircraft).y) -- update plane coords for the loop
         end
@@ -206,7 +205,7 @@ function DropCrate(weapon, ammo, coords)
         SetEntityAsNoLongerNeeded(pilot) 
         SetEntityAsNoLongerNeeded(aircraft)
 
-        local crateSpawn = vector3(coords.x, coords.y, GetEntityCoords(aircraft).z - 5.0) -- crate will drop to the exact position as planned, not at the plane's current position
+        local crateSpawn = vector3(dropCoords.x, dropCoords.y, GetEntityCoords(aircraft).z - 5.0) -- crate will drop to the exact position as planned, not at the plane's current position
 
         crate = CreateObject(GetHashKey("prop_box_wood02a_pu"), crateSpawn, true, true, true) -- a breakable crate to be spawned directly under the plane, probably could be spawned closer to the plane
         SetEntityLodDist(crate, 1000) -- so we can see it from the distance
@@ -246,8 +245,8 @@ function DropCrate(weapon, ammo, coords)
             Wait(0)
         end
 
-        local parachuteCoords = vector3(GetEntityCoords(parachute)) -- we get the parachute coords so we know where to drop the flare
-        ShootSingleBulletBetweenCoords(parachuteCoords, parachuteCoords - vector3(0.0, 0.0, 0.001), 0, false, GetHashKey("weapon_flare"), 0, true, false, -1.0) -- flare needs to be dropped with coords like that, otherwise it remains static and won't remove itself later
+        local parachuteCoords = vector3(GetEntityCoords(parachute)) -- we get the parachute dropCoords so we know where to drop the flare
+        ShootSingleBulletBetweenCoords(parachuteCoords, parachuteCoords - vector3(0.0, 0.0, 0.001), 0, false, GetHashKey("weapon_flare"), 0, true, false, -1.0) -- flare needs to be dropped with dropCoords like that, otherwise it remains static and won't remove itself later
         DetachEntity(parachute, true, true) -- detach parachute
         SetEntityCollision(parachute, false, true) -- remove collision, pointless right now but would be cool if animations would work and you'll be able to walk through the parachute while it's disappearing
         -- PlayEntityAnim(parachute, "P_cargo_chute_S_crumple", "P_cargo_chute_S", 1000.0, false, false, false, 0, 0) -- disabled since animations don't work
