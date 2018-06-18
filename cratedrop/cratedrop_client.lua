@@ -87,13 +87,13 @@ RegisterCommand("drop", function(playerServerID, args, rawString)
 end, false)
 
 RegisterNetEvent("crateDrop")
+
 AddEventHandler("crateDrop", function(weapon, ammo, roofCheck, dropCoords)
     Citizen.CreateThread(function()
 
         if IsWeaponValid(GetHashKey(weapon)) then
-        elseif IsWeaponValid(GetHashKey("pickup_" .. weapon)) then
             weapon = "pickup_" .. weapon
-        elseif IsWeaponValid(GetHashKey("pickup_weapon_" .. weapon)) then
+        elseif IsWeaponValid(GetHashKey("weapon_" .. weapon)) then
             weapon = "pickup_weapon_" .. weapon
         else
             print("Pickup name invalid")
@@ -103,12 +103,10 @@ AddEventHandler("crateDrop", function(weapon, ammo, roofCheck, dropCoords)
         print("WEAPON: " .. weapon)
 
         local ammo = (ammo and tonumber(ammo)) or 9999
-        if ammo then
-            if ammo > 9999 then
-                ammo = 9999
-            elseif ammo < -1 then
-                ammo = -1
-            end
+        if ammo > 9999 then
+            ammo = 9999
+        elseif ammo < -1 then
+            ammo = -1
         end
 
         print("AMMO: " .. ammo)
@@ -120,9 +118,7 @@ AddEventHandler("crateDrop", function(weapon, ammo, roofCheck, dropCoords)
             dropsite = vector3(dropCoords.x, dropCoords.y, dropCoords.z)
         end
 
-        local roofCheck = roofCheck or false -- if roofCheck is true then a check will be performed if a plane can drop a crate to the specified location before actually spawning a plane, if it can't, function won't be called
-
-        if roofCheck then
+        if roofCheck and not roofCheck == "false" then  -- if roofCheck is not false then a check will be performed if a plane can drop a crate to the specified location before actually spawning a plane, if it can't, function won't be called
             print("ROOFCHECK: true")
             local ray = StartShapeTestRay(dropsite + vector3(0.0, 0.0, 200.0), dropsite, -1, -1, 0) -- bitwise flag could also be 17
             local _, hit, impactCoords = GetShapeTestResult(ray)
