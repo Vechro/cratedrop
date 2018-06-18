@@ -82,7 +82,6 @@ end)
 
 RegisterCommand("drop", function(playerServerID, args, rawString)
     local dropCoords = GetOffsetFromEntityInWorldCoords(PlayerPedId(), 0.0, 10.0, 0.0)
-    print("dropCoords.x: " .. dropCoords.x)
     if weaponList[args[1]] == nil then
         if tonumber(args[2]) == nil then
             print("Cratedrop failed: weapon and ammo count unrecognized")
@@ -102,11 +101,33 @@ RegisterNetEvent("crateDrop")
 AddEventHandler("crateDrop", function(weapon, ammo, roofCheck, dropCoords)
     Citizen.CreateThread(function()
 
-        local roofCheck = roofCheck or false -- if roofCheck is true then a check will be performed if a plane can drop a crate to the specified location before actually spawning a plane, if it can't, function won't be called
+        if IsWeaponValid(GetHashKey(weapon)) then
+        elseif IsWeaponValid(GetHashKey("pickup_" .. weapon)) then
+            weapon = "pickup_" .. weapon
+        elseif IsWeaponValid(GetHashKey("pickup_weapon_" .. weapon)) then
+            weapon = "pickup_weapon_" .. weapon
+        else
+            print("Pickup name invalid")
+            return
+        end
 
+        print("WEAPON: " .. weapon)
+
+        local ammo = (ammo and tonumber(ammo)) or 9999
+        if ammo then
+            if ammo > 9999 then
+                ammo = 9999
+            elseif ammo < -1 then
+                ammo = -1
+            end
+        end
+
+        print("AMMO: " .. ammo)
+
+        local roofCheck = roofCheck or false -- if roofCheck is true then a check will be performed if a plane can drop a crate to the specified location before actually spawning a plane, if it can't, function won't be called
         if not dropCoords.x or not dropCoords.y or not dropCoords.z or not tonumber(dropCoords.x) or not tonumber(dropCoords.y) or not tonumber(dropCoords.z) then
             dropsite = vector3(0.0, 0.0, 72.0)
-            print("Failed interpreting dropCoords, defaulting to 0, 0, 72")
+            print("Failed interpreting dropCoords, defaulting to X = 0; Y = 0")
         else
             dropsite = vector3(dropCoords.x, dropCoords.y, dropCoords.z)
         end
@@ -152,16 +173,10 @@ function DropCrate(weapon, ammo, dropCoords, planeSpawnDistance)
             Wait(0)
         end
 
-        local planeSpawn = dropCoords + vector3(-400.0, 0.0, 500.0) -- location for plane spawning
-
         local rHeading = math.random(0, 360) + 0.0
         local planeSpawnDistance = (planeSpawnDistance and tonumber(planeSpawnDistance)) or 400.0
-
-        -- local theta = (rHeading / 180.0) * math.pi -- might work well enough with just 3.1416
-        local theta = (rHeading / 180.0) * math.pi -- might work well enough with just 3.1416
-
-        -- local rPlaneSpawn = vector3(dropCoords.x - (math.cos(theta) * planeSpawnDistance), dropCoords.y - (math.sin(theta) * planeSpawnDistance), dropCoords.z + 500.0)
-        local rPlaneSpawn = vector3(dropCoords) - vector3(math.cos(theta) * planeSpawnDistance, math.sin(theta) * planeSpawnDistance, -500.0) -- two negatives make a positive, right?
+        local theta = (rHeading / 180.0) * 3.14
+        local rPlaneSpawn = dropCoords - vector3(math.cos(theta) * planeSpawnDistance, math.sin(theta) * planeSpawnDistance, -500.0)
 
         print("rPlaneSpawn: " .. rPlaneSpawn)
         print("rPlaneSpawn distance: " .. #(vector2(rPlaneSpawn.x, rPlaneSpawn.y) - vector2(dropCoords.x, dropCoords.y)))
@@ -170,8 +185,8 @@ function DropCrate(weapon, ammo, dropCoords, planeSpawnDistance)
         local dy = dropCoords.y - rPlaneSpawn.y
         local heading = GetHeadingFromVector_2d(dx, dy) -- determine plane heading from coordinates
 
-        aircraft = CreateVehicle(GetHashKey("cuban800"), rPlaneSpawn, heading, true, true) -- spawn the plane, FIX THE HEADING
-        SetEntityHeading(aircraft, heading) -- the plane spawns behind the player facing the same direction as the player, FIX THE HEADING
+        aircraft = CreateVehicle(GetHashKey("cuban800"), rPlaneSpawn, heading, true, true) -- spawn the plane
+        SetEntityHeading(aircraft, heading) -- the plane spawns behind the player facing the same direction as the player
         SetVehicleDoorsLocked(aircraft, 2) -- lock the doors because why not?
         SetEntityDynamic(aircraft, true)
         ActivatePhysics(aircraft)
@@ -182,7 +197,7 @@ function DropCrate(weapon, ammo, dropCoords, planeSpawnDistance)
         OpenBombBayDoors(aircraft) -- opens the hatch below the plane for added realism
         SetEntityProofs(aircraft, true, false, true, false, false, false, false, false)
 
-        pilot = CreatePedInsideVehicle(aircraft, 1, GetHashKey("s_m_m_pilot_02"), -1, true, true) -- put the pilot in the plane
+        pilot = CreatePedInsideVehicle(aircraft, 1, GetHashKey("s_m_m_pilot_02"), -1, true, true)
         SetBlockingOfNonTemporaryEvents(pilot, true) -- ignore explosions and other shocking events
         SetPedRandomComponentVariation(pilot, false)
         SetPedKeepTask(pilot, true)
@@ -290,7 +305,7 @@ AddEventHandler('onResourceStop', function(resource)
             SetEntityAsMissionEntity(pilot, false, true)
             DeleteEntity(pilot)
             SetEntityAsMissionEntity(aircraft, false, true)
-            DeleteEntity(aircraft) -- literally doesn't work
+            DeleteEntity(aircraft) -- literally doesn't work OR exercise for the reader, make it work
             ]]
             SetEntityAsNoLongerNeeded(pilot) 
             SetEntityAsNoLongerNeeded(aircraft)
