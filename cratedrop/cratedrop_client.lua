@@ -1,32 +1,20 @@
 local dropsite, pilot, aircraft, parachute, crate, pickup, blip, soundID
 
--- the next 16 lines add support for Scammer's Universal Menu, it can be removed if it causes any issues
-AddEventHandler("menu:setup", function()
-	TriggerEvent("menu:registerModuleMenu", "Crate Drop", function(id)
-		local ammoAmounts = { 10, 20, 50, 100, 500, 1000, 9999 }
-		for weaponLabel, weaponName in pairs(weaponList) do
-			print(weaponLabel)
-			TriggerEvent("menu:addModuleSubMenu", id, weaponLabel, function(id)
-				for _, ammoAmount in ipairs(ammoAmounts) do
-					TriggerEvent("menu:addModuleItem", id, "Ammo: " .. ammoAmount, nil, false, function()
-                        TriggerEvent("crateDrop", weaponName, ammoAmount)
-                        TriggerEvent("menu:hideMenu")
-					end)
-				end
-			end, false)
-		end
-	end, false)
-end)
-
-RegisterCommand("drop", function(playerServerID, args, rawString)
-    local dropCoords = GetOffsetFromEntityInWorldCoords(PlayerPedId(), 0.0, 10.0, 0.0)
-    TriggerEvent("crateDrop", args[1], tonumber(args[2]), args[3] or false, args[4], {["x"] = args[5] or dropCoords.x, ["y"] = args[6] or dropCoords.y, ["z"] = args[7] or dropCoords.z})
+RegisterCommand("dropcrate", function(playerServerID, args, rawString)
+    local x, y, z = table.unpack(GetOffsetFromEntityInWorldCoords(PlayerPedId(), 0.0, 10.0, 0.0))
+    local tempTable = {["x"] = x, ["y"] = y, ["z"] = z}
+    print("TEMPTABLE: " .. tempTable.x)
+    -- TriggerEvent("crateDrop", args[1], tonumber(args[2]), args[3] or false, args[4], {["x"] = args[5] or dropCoords.x, ["y"] = args[6] or dropCoords.y, ["z"] = args[7] or dropCoords.z})
+    TriggerEvent("crateDrop", args[1], tonumber(args[2]), args[3] or false, args[4], tempTable)
 end, false)
 
 RegisterNetEvent("crateDrop")
 
 AddEventHandler("crateDrop", function(weapon, ammo, roofCheck, planeSpawnDistance, dropCoords) -- all of the error checking is done here before passing the parameters to the function itself
     Citizen.CreateThread(function()
+
+        print("TABLE TYPE: " .. type(dropCoords))
+        print("TABLE X: " .. dropCoords.x)
 
         local weapon = string.lower(weapon)
         if IsWeaponValid(GetHashKey(weapon)) then -- only supports weapon pickups for now, use the function directly to bypass this
@@ -44,7 +32,7 @@ AddEventHandler("crateDrop", function(weapon, ammo, roofCheck, planeSpawnDistanc
 
         print("WEAPON: " .. weapon)
 
-        local ammo = (ammo and tonumber(ammo)) or 9999
+        local ammo = (ammo and tonumber(ammo)) or 250
         if ammo > 9999 then
             ammo = 9999
         elseif ammo < -1 then
@@ -53,28 +41,30 @@ AddEventHandler("crateDrop", function(weapon, ammo, roofCheck, planeSpawnDistanc
 
         print("AMMO: " .. ammo)
 
-        if not dropCoords.x or not dropCoords.y or not dropCoords.z or not tonumber(dropCoords.x) or not tonumber(dropCoords.y) or not tonumber(dropCoords.z) then
-            dropsite = vector3(0.0, 0.0, 72.0)
-            print("DROP COORDS: failed, defaulting to X = 0; Y = 0")
+        if dropCoords.x and dropCoords.y and dropCoords.z and tonumber(dropCoords.x) and tonumber(dropCoords.y) and tonumber(dropCoords.z) then
+            -- dropsite = vector3(dropCoords[1], dropCoords[2], dropCoords[3])
+            -- print("DROP COORDS: success, X = %.4f; Y = %.4f; Z = %.4f"):format(dropCoords.x, dropCoords.y, dropCoords.z)
+            print("DROP COORDS: success")
         else
-            dropsite = vector3(dropCoords.x, dropCoords.y, dropCoords.z)
-            print("DROP COORDS: success, X = %.4f; Y = %.4f; Z = %.4f"):format(dropCoords.x, dropCoords.y, dropCoords.z)
+            -- dropsite = vector3(0.0, 0.0, 72.0)
+            dropCoords = {0.0, 0.0, 72.0}
+            print("DROP COORDS: fail, defaulting to X = 0; Y = 0")
         end
 
         if roofCheck and not roofCheck == "false" then  -- if roofCheck is not false then a check will be performed if a plane can drop a crate to the specified location before actually spawning a plane, if it can't, function won't be called
             print("ROOFCHECK: true")
-            local ray = StartShapeTestRay(dropsite + vector3(0.0, 0.0, 200.0), dropsite, -1, -1, 0)
+            local ray = StartShapeTestRay(vector3(dropCoords) + vector3(0.0, 0.0, 200.0), dropsite, -1, -1, 0)
             local _, hit, impactCoords = GetShapeTestResult(ray)
-            if hit == 0 or #((dropsite - vector3(0.0, 0.0, 200.0)) - vector3(impactCoords)) < 10.0 then -- ± 10 units
+            if hit == 0 or #((vector3(dropCoords) - vector3(0.0, 0.0, 200.0)) - vector3(impactCoords)) < 10.0 then -- ± 10 units
                 print("ROOFCHECK: success")
-                DropCrate(weapon, ammo, planeSpawnDistance, dropsite)
+                DropCrate(weapon, ammo, planeSpawnDistance, dropCoords)
             else
                 print("ROOFCHECK: fail")
                 return
             end
         else
             print("ROOFCHECK: false")
-            DropCrate(weapon, ammo, planeSpawnDistance, dropsite)
+            DropCrate(weapon, ammo, planeSpawnDistance, dropCoords)
         end
 
     end)
@@ -83,7 +73,7 @@ end)
 function DropCrate(weapon, ammo, planeSpawnDistance, dropCoords)
     Citizen.CreateThread(function()
 
-        local requiredModels = {"p_cargo_chute_s", "ex_prop_adv_case_sm", "cuban800", "s_m_m_pilot_02", "prop_box_wood02a_pu"} -- parachute, pickup case, plane, pilot, crate, flare
+        local requiredModels = {"p_cargo_chute_s", "ex_prop_adv_case_sm", "cuban800", "s_m_m_pilot_02", "prop_box_wood02a_pu"} -- parachute, pickup case, plane, pilot, crate
 
         for i = 1, #requiredModels do
             RequestModel(GetHashKey(requiredModels[i]))
@@ -105,12 +95,20 @@ function DropCrate(weapon, ammo, planeSpawnDistance, dropCoords)
         end
 
         local rHeading = math.random(0, 360) + 0.0
-        local planeSpawnDistance = (planeSpawnDistance and tonumber(planeSpawnDistance)) or 400.0
+        local planeSpawnDistance = (planeSpawnDistance and tonumber(planeSpawnDistance)) or 400.0 -- this defines how far away the plane is spawned
         local theta = (rHeading / 180.0) * 3.14
-        local rPlaneSpawn = dropCoords - vector3(math.cos(theta) * planeSpawnDistance, math.sin(theta) * planeSpawnDistance, -500.0)
+        local rPlaneSpawn = vector3(dropCoords.x, dropCoords.y, dropCoords.z) - vector3(math.cos(theta) * planeSpawnDistance, math.sin(theta) * planeSpawnDistance, -500.0) -- the plane is spawned at
 
-        print("PLANE COORDS: X = %.4f; Y = %.4f; Z = %.4f"):format(rPlaneSpawn.x, rPlaneSpawn.y, rPlaneSpawn.z)
+        print("PLANE SPAWN X: " .. rPlaneSpawn.x)
+        print("PLANE SPAWN Y: " .. rPlaneSpawn.y)
+        print("PLANE SPAWN Z: " .. rPlaneSpawn.z)
+
+        -- print("PLANE COORDS: X = %.4f; Y = %.4f; Z = %.4f"):format(rPlaneSpawn.x, rPlaneSpawn.y, rPlaneSpawn.z)
         -- print("rPlaneSpawn distance: " .. #(vector2(rPlaneSpawn.x, rPlaneSpawn.y) - vector2(dropCoords.x, dropCoords.y)))
+
+        print("DROP COORDS X: " .. dropCoords.x)
+        print("DROP COORDS Y: " .. dropCoords.y)
+        print("DROP COORDS Z: " .. dropCoords.z)
 
         local dx = dropCoords.x - rPlaneSpawn.x
         local dy = dropCoords.y - rPlaneSpawn.y
@@ -134,7 +132,7 @@ function DropCrate(weapon, ammo, planeSpawnDistance, dropCoords)
         SetPedKeepTask(pilot, true)
         SetPlaneMinHeightAboveTerrain(aircraft, 50) -- the plane shouldn't dip below the defined altitude
 
-        TaskVehicleDriveToCoord(pilot, aircraft, dropCoords + vector3(0.0, 0.0, 500.0), 60.0, 0, GetHashKey("cuban800"), 262144, 15.0, -1.0) -- to the dropsite, could be replaced with a task sequence
+        TaskVehicleDriveToCoord(pilot, aircraft, vector3(dropCoords.x, dropCoords.y, dropCoords.z) + vector3(0.0, 0.0, 500.0), 60.0, 0, GetHashKey("cuban800"), 262144, 15.0, -1.0) -- to the dropsite, could be replaced with a task sequence
 
         local dropsite = vector2(dropCoords.x, dropCoords.y)
         local planeLocation = vector2(GetEntityCoords(aircraft).x, GetEntityCoords(aircraft).y)
@@ -143,7 +141,7 @@ function DropCrate(weapon, ammo, planeSpawnDistance, dropCoords)
             planeLocation = vector2(GetEntityCoords(aircraft).x, GetEntityCoords(aircraft).y) -- update plane coords for the loop
         end
 
-        if IsEntityDead(pilot) == true then -- I think this will end the script if the pilot dies, no idea how to return works
+        if IsEntityDead(pilot) then -- I think this will end the script if the pilot dies, no idea how to return works
             do return end
         end
 
@@ -228,9 +226,11 @@ function DropCrate(weapon, ammo, planeSpawnDistance, dropCoords)
     end)
 end
 
-AddEventHandler('onResourceStop', function(resource)
+AddEventHandler("onResourceStop", function(resource)
     Citizen.CreateThread(function()
         if resource == GetCurrentResourceName() then
+
+            print(GetCurrentResourceName():upper() .. " HAS BEEN STOPPED") -- because I literally have no idea if this works or not
 
             --[[
             SetEntityAsMissionEntity(pilot, false, true)
