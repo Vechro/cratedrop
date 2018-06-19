@@ -1,66 +1,3 @@
---[[
-local weaponList = {
-    ["pistol"] = "PICKUP_WEAPON_PISTOL",
-    ["combatpistol"] = "PICKUP_WEAPON_COMBATPISTOL",
-    ["appistol"] = "PICKUP_WEAPON_APPISTOL",
-    ["pistol50"] = "PICKUP_WEAPON_PISTOL50",
-    ["snspistol"] = "PICKUP_WEAPON_SNSPISTOL",
-    ["vintagepistol"] = "PICKUP_WEAPON_VINTAGEPISTOL",
-    ["marksmanpistol"] = "PICKUP_WEAPON_MARKSMANPISTOL",
-    ["heavypistol"] = "PICKUP_WEAPON_HEAVYPISTOL",
-    ["heavyrevolver"] = "PICKUP_WEAPON_REVOLVER",
-    ["revolver"] = "PICKUP_WEAPON_REVOLVER",
-    ["doubleactionrevolver"] = "PICKUP_WEAPON_DOUBLEACTION",
-    ["stungun"] = "PICKUP_WEAPON_STUNGUN",
-    ["flaregun"] = "PICKUP_WEAPON_FLAREGUN",
-
-    ["microsmg"] = "PICKUP_WEAPON_MICROSMG",
-    ["smg"] = "PICKUP_WEAPON_SMG",
-    ["assaultsmg"] = "PICKUP_WEAPON_ASSAULTSMG",
-    ["combatpdw"] = "PICKUP_WEAPON_COMBATPDW",
-    ["machinepistol"] = "PICKUP_WEAPON_MACHINEPISTOL",
-    ["minismg"] = "PICKUP_WEAPON_MINISMG",
-
-    ["mg"] = "PICKUP_WEAPON_MG",
-    ["combatmg"] = "PICKUP_WEAPON_COMBATMG",
-    ["gusenbergsweeper"] = "PICKUP_WEAPON_GUSENBERG",
-
-    ["pumpshotgun"] = "PICKUP_WEAPON_PUMPSHOTGUN",
-    ["sawedoffshotgun"] = "PICKUP_WEAPON_SAWNOFFSHOTGUN",
-    ["assaultshotgun"] = "PICKUP_WEAPON_AUTOSHOTGUN",
-    ["heavyshotgun"] = "PICKUP_WEAPON_HEAVYSHOTGUN",
-    ["bullpupshotgun"] = "PICKUP_WEAPON_BULLPUPSHOTGUN",
-    ["sweepershotgun"] = "PICKUP_WEAPON_AUTOSHOTGUN",
-    ["doublebarrelshotgun"] = "PICKUP_WEAPON_DBSHOTGUN",
-    ["musket"] = "PICKUP_WEAPON_MUSKET",
-
-    ["assaultrifle"] = "PICKUP_WEAPON_ASSAULTRIFLE",
-    ["carbinerifle"] = "PICKUP_WEAPON_CARBINERIFLE",
-    ["advancedrifle"] = "PICKUP_WEAPON_ADVANCEDRIFLE",
-    ["specialcarbine"] = "PICKUP_WEAPON_SPECIALCARBINE",
-    ["bullpuprifle"] = "PICKUP_WEAPON_BULLPUPRIFLE",
-    ["compactrifle"] = "PICKUP_WEAPON_COMPACTRIFLE",
-
-    ["minigun"] = "PICKUP_WEAPON_MINIGUN",
-    ["rpg"] = "PICKUP_WEAPON_RPG",
-    ["railgun"] = "PICKUP_WEAPON_RAILGUN",
-    ["grenadelauncher"] = "PICKUP_WEAPON_GRENADELAUNCHER",
-    ["compactlauncher"] = "PICKUP_WEAPON_COMPACTLAUNCHER",
-    ["hominglauncher"] = "PICKUP_WEAPON_HOMINGLAUNCHER",
-    ["fireworklauncher"] = "PICKUP_WEAPON_FIREWORK",
-
-    ["grenade"] = "PICKUP_WEAPON_GRENADE",
-    ["pipebomb"] = "PICKUP_WEAPON_PIPEBOMB",
-    ["proximitymine"] = "PICKUP_WEAPON_PROXMINE",
-    ["stickybomb"] = "PICKUP_WEAPON_STICKYBOMB",
-    ["teargas"] = "PICKUP_WEAPON_SMOKEGRENADE",
-    ["molotov"] = "PICKUP_WEAPON_MOLOTOV",
-
-    ["sniperrifle"] = "PICKUP_WEAPON_SNIPERRIFLE",
-    ["heavysniper"] = "PICKUP_WEAPON_HEAVYSNIPER",
-    ["marksmanrifle"] = "PICKUP_WEAPON_MARKSMANRIFLE",
-}
-]]
 local dropsite, pilot, aircraft, parachute, crate, pickup, blip, soundID
 
 -- the next 16 lines add support for Scammer's Universal Menu, it can be removed if it causes any issues
@@ -88,17 +25,21 @@ end, false)
 
 RegisterNetEvent("crateDrop")
 
-AddEventHandler("crateDrop", function(weapon, ammo, roofCheck, planeSpawnDistance, dropCoords)
+AddEventHandler("crateDrop", function(weapon, ammo, roofCheck, planeSpawnDistance, dropCoords) -- all of the error checking is done here before passing the parameters to the function itself
     Citizen.CreateThread(function()
 
-        if IsWeaponValid(GetHashKey(weapon)) then
+        local weapon = string.lower(weapon)
+        if IsWeaponValid(GetHashKey(weapon)) then -- only supports weapon pickups for now, use the function directly to bypass this
             weapon = "pickup_" .. weapon
-            print("WEAPON VALIDITY: true")
+            print("WEAPON VALIDITY: true, after concatenating 'pickup_'")
         elseif IsWeaponValid(GetHashKey("weapon_" .. weapon)) then
             weapon = "pickup_weapon_" .. weapon
+            print("WEAPON VALIDITY: true, after concatenating 'pickup_weapon_'")
+        elseif IsWeaponValid(GetHashKey(weapon:sub(8))) then
             print("WEAPON VALIDITY: true")
         else
-            print("WEAPON VALIDITY: unknown") -- no way of knowing if it's a proper pickup name or not, but the script will roll with it
+            print("WEAPON VALIDITY: false")
+            return
         end
 
         print("WEAPON: " .. weapon)
@@ -128,7 +69,7 @@ AddEventHandler("crateDrop", function(weapon, ammo, roofCheck, planeSpawnDistanc
                 print("ROOFCHECK: success")
                 DropCrate(weapon, ammo, planeSpawnDistance, dropsite)
             else
-                print("ROOFCHECK: failed")
+                print("ROOFCHECK: fail")
                 return
             end
         else
@@ -142,7 +83,7 @@ end)
 function DropCrate(weapon, ammo, planeSpawnDistance, dropCoords)
     Citizen.CreateThread(function()
 
-        local requiredModels = {"p_cargo_chute_s", "ex_prop_adv_case_sm", "cuban800", "s_m_m_pilot_02", "prop_box_wood02a_pu", "prop_flare_01"} -- parachute, pickup case, plane, pilot, crate, flare
+        local requiredModels = {"p_cargo_chute_s", "ex_prop_adv_case_sm", "cuban800", "s_m_m_pilot_02", "prop_box_wood02a_pu"} -- parachute, pickup case, plane, pilot, crate, flare
 
         for i = 1, #requiredModels do
             RequestModel(GetHashKey(requiredModels[i]))
@@ -220,7 +161,7 @@ function DropCrate(weapon, ammo, planeSpawnDistance, dropCoords)
 
         parachute = CreateObject(GetHashKey("p_cargo_chute_s"), crateSpawn, true, true, true) -- create the parachute for the crate
         SetEntityLodDist(parachute, 1000)
-        SetEntityVelocity(parachute, 0.0, 0.0, -0.2) -- I think this makes the crate drop down, not sure if it's needed as many times in the script as I'm using
+        SetEntityVelocity(parachute, 0.0, 0.0, -0.2)
 
         -- PlayEntityAnim(parachute, "P_cargo_chute_S_deploy", "P_cargo_chute_S", 1000.0, false, false, false, 0, 0) -- disabled since animations don't work
         -- ForceEntityAiAndAnimationUpdate(parachute) -- pointless if animations aren't working
@@ -228,7 +169,7 @@ function DropCrate(weapon, ammo, planeSpawnDistance, dropCoords)
         pickup = CreateAmbientPickup(GetHashKey(weapon), crateSpawn, 0, ammo, GetHashKey("ex_prop_adv_case_sm"), true, true) -- we make the pickup, location doesn't matter too much, we're attaching it later
         ActivatePhysics(pickup)
         SetDamping(pickup, 2, 0.0245)
-        SetEntityVelocity(pickup, 0.0, 0.0, -0.2) -- I think this makes the crate drop down, not sure if it's needed as many times in the script as I'm using
+        SetEntityVelocity(pickup, 0.0, 0.0, -0.2)
 
         soundID = GetSoundId() -- we need a sound ID for calling the native below, otherwise we won't be able to stop the sound later
         PlaySoundFromEntity(soundID, "Crate_Beeps", pickup, "MP_CRATE_DROP_SOUNDS", true, 0) -- crate beep sound emitted from the pickup
