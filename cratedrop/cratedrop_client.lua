@@ -1,8 +1,8 @@
 local dropsite, pilot, aircraft, parachute, crate, pickup, blip, soundID
 
 RegisterCommand("dropcrate", function(playerServerID, args, rawString)
-    local x, y, z = table.unpack(GetOffsetFromEntityInWorldCoords(PlayerPedId(), 0.0, 10.0, 0.0))
-    local tempTable = {["x"] = x, ["y"] = y, ["z"] = z}
+    local vx, vy, vz = table.unpack(GetOffsetFromEntityInWorldCoords(PlayerPedId(), 0.0, 10.0, 0.0))
+    local tempTable = {x = vx, y = vy, z = vz}
     print("TEMPTABLE: " .. tempTable.x)
     -- TriggerEvent("crateDrop", args[1], tonumber(args[2]), args[3] or false, args[4], {["x"] = args[5] or dropCoords.x, ["y"] = args[6] or dropCoords.y, ["z"] = args[7] or dropCoords.z})
     TriggerEvent("crateDrop", args[1], tonumber(args[2]), args[3] or false, args[4], tempTable)
@@ -145,7 +145,7 @@ function DropCrate(weapon, ammo, planeSpawnDistance, dropCoords)
             do return end
         end
 
-        TaskVehicleDriveToCoord(pilot, aircraft, 0, 0, 500, 60.0, 0, GetHashKey("cuban800"), 262144, -1.0, -1.0) -- disposing of the plane like Rockstar does, send it to 0; 0 coords with -1.0 stop range, so the plane won't be able to achieve its task
+        TaskVehicleDriveToCoord(pilot, aircraft, 0.0, 0.0, 500.0, 60.0, 0, GetHashKey("cuban800"), 262144, -1.0, -1.0) -- disposing of the plane like Rockstar does, send it to 0; 0 coords with -1.0 stop range, so the plane won't be able to achieve its task
         SetEntityAsNoLongerNeeded(pilot) 
         SetEntityAsNoLongerNeeded(aircraft)
 
@@ -227,19 +227,16 @@ function DropCrate(weapon, ammo, planeSpawnDistance, dropCoords)
 end
 
 AddEventHandler("onResourceStop", function(resource)
-    Citizen.CreateThread(function()
-        if resource == GetCurrentResourceName() then
+    if resource == GetCurrentResourceName() then
+        Citizen.CreateThread(function()
+            print("THE RESOURCE HAS BEEN STOPPED") -- because I literally have no idea if this works or not
 
-            print(GetCurrentResourceName():upper() .. " HAS BEEN STOPPED") -- because I literally have no idea if this works or not
-
-            --[[
             SetEntityAsMissionEntity(pilot, false, true)
             DeleteEntity(pilot)
             SetEntityAsMissionEntity(aircraft, false, true)
-            DeleteEntity(aircraft) -- literally doesn't work OR exercise for the reader, make it work
-            ]]
-            SetEntityAsNoLongerNeeded(pilot) 
-            SetEntityAsNoLongerNeeded(aircraft)
+            DeleteEntity(aircraft)
+            -- SetEntityAsNoLongerNeeded(pilot) 
+            -- SetEntityAsNoLongerNeeded(aircraft)
             DeleteEntity(parachute)
             DeleteEntity(crate)
             RemovePickup(pickup)
@@ -252,6 +249,6 @@ AddEventHandler("onResourceStop", function(resource)
                 SetModelAsNoLongerNeeded(GetHashKey(requiredModels[i]))
             end
 
-        end
-    end)
+        end)
+    end
 end)
