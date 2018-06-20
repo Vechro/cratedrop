@@ -2,8 +2,8 @@ local dropsite, pilot, aircraft, parachute, crate, pickup, blip, soundID
 local requiredModels = {"p_cargo_chute_s", "ex_prop_adv_case_sm", "cuban800", "s_m_m_pilot_02", "prop_box_wood02a_pu"} -- parachute, pickup case, plane, pilot, crate
 
 RegisterCommand("cratedrop", function(playerServerID, args, rawString)
-    local px, py, pz = table.unpack(GetOffsetFromEntityInWorldCoords(PlayerPedId(), 0.0, 10.0, 0.0))
-    TriggerEvent("crateDrop", args[1], tonumber(args[2]), args[3] or false, args[4] or 400.0, {["x"] = px, ["y"] = py, ["z"] = pz})
+    local playerCoords = GetOffsetFromEntityInWorldCoords(PlayerPedId(), 0.0, 10.0, 0.0) -- ISN'T THIS A TABLE ALREADY?
+    TriggerEvent("crateDrop", args[1], tonumber(args[2]), args[3] or false, args[4] or 400.0, {["x"] = playerCoords.x, ["y"] = playerCoords.y, ["z"] = playerCoords.z})
 end, false)
 
 RegisterNetEvent("crateDrop")
@@ -11,7 +11,6 @@ RegisterNetEvent("crateDrop")
 AddEventHandler("crateDrop", function(weapon, ammo, roofCheck, planeSpawnDistance, dropCoords) -- all of the error checking is done here before passing the parameters to the function itself
     Citizen.CreateThread(function()
 
-        local weapon = string.lower(weapon) -- just preference for when the weapon name gets printed
         if IsWeaponValid(GetHashKey(weapon)) then -- only supports weapon pickups for now, use the function directly to bypass this
             weapon = "pickup_" .. weapon
             -- print("WEAPON VALIDITY: true, after concatenating 'pickup_'")
@@ -25,7 +24,7 @@ AddEventHandler("crateDrop", function(weapon, ammo, roofCheck, planeSpawnDistanc
             return
         end
 
-        -- print("WEAPON: " .. weapon)
+        -- print("WEAPON: " .. string.lower(weapon))
 
         local ammo = (ammo and tonumber(ammo)) or 250
         if ammo > 9999 then
