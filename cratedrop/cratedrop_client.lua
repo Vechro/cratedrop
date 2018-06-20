@@ -1,7 +1,7 @@
 local dropsite, pilot, aircraft, parachute, crate, pickup, blip, soundID
 local requiredModels = {"p_cargo_chute_s", "ex_prop_adv_case_sm", "cuban800", "s_m_m_pilot_02", "prop_box_wood02a_pu"} -- parachute, pickup case, plane, pilot, crate
 
-RegisterCommand("dropcrate", function(playerServerID, args, rawString)
+RegisterCommand("cratedrop", function(playerServerID, args, rawString)
     local px, py, pz = table.unpack(GetOffsetFromEntityInWorldCoords(PlayerPedId(), 0.0, 10.0, 0.0))
     TriggerEvent("crateDrop", args[1], tonumber(args[2]), args[3] or false, args[4] or 400.0, {["x"] = px, ["y"] = py, ["z"] = pz})
 end, false)
