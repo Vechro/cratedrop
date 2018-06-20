@@ -1,4 +1,4 @@
-local dropsite, pilot, aircraft, parachute, crate, pickup, blip, soundID
+local pilot, aircraft, parachute, crate, pickup, blip, soundID
 local requiredModels = {"p_cargo_chute_s", "ex_prop_adv_case_sm", "cuban800", "s_m_m_pilot_02", "prop_box_wood02a_pu"} -- parachute, pickup case, plane, pilot, crate
 
 RegisterCommand("cratedrop", function(playerServerID, args, rawString)
@@ -118,14 +118,15 @@ function CrateDrop(weapon, ammo, planeSpawnDistance, dropCoords)
 
         TaskVehicleDriveToCoord(pilot, aircraft, vector3(dropCoords.x, dropCoords.y, dropCoords.z) + vector3(0.0, 0.0, 500.0), 60.0, 0, GetHashKey("cuban800"), 262144, 15.0, -1.0) -- to the dropsite, could be replaced with a task sequence
 
-        local dropsite = vector2(dropCoords.x, dropCoords.y)
+        local droparea = vector2(dropCoords.x, dropCoords.y)
         local planeLocation = vector2(GetEntityCoords(aircraft).x, GetEntityCoords(aircraft).y)
-        while not IsEntityDead(pilot) and #(planeLocation - dropsite) > 5.0 do -- wait for when the plane reaches the dropCoords ± 5 units
+        while not IsEntityDead(pilot) and #(planeLocation - droparea) > 5.0 do -- wait for when the plane reaches the dropCoords ± 5 units
             Wait(100)
             planeLocation = vector2(GetEntityCoords(aircraft).x, GetEntityCoords(aircraft).y) -- update plane coords for the loop
         end
 
         if IsEntityDead(pilot) then -- I think this will end the script if the pilot dies, no idea how to return works
+            print("PILOT: dead")
             do return end
         end
 
@@ -215,12 +216,10 @@ AddEventHandler("onResourceStop", function(resource)
 
         -- print("RESOURCE: stopped")
 
-        SetEntityAsMissionEntity(pilot, false, true) -- TEST THIS PART
+        SetEntityAsMissionEntity(pilot, false, true)
         DeleteEntity(pilot)
         SetEntityAsMissionEntity(aircraft, false, true)
         DeleteEntity(aircraft)
-        -- SetEntityAsNoLongerNeeded(pilot) 
-        -- SetEntityAsNoLongerNeeded(aircraft)
         DeleteEntity(parachute)
         DeleteEntity(crate)
         RemovePickup(pickup)
