@@ -87,7 +87,7 @@ function CrateDrop(weapon, ammo, planeSpawnDistance, dropCoords)
         end
 
         local rHeading = math.random(0, 360) + 0.0
-        local planeSpawnDistance = (planeSpawnDistance and tonumber(planeSpawnDistance)) or 400.0 -- this defines how far away the plane is spawned
+        local planeSpawnDistance = (planeSpawnDistance and tonumber(planeSpawnDistance) + 0.0) or 400.0 -- this defines how far away the plane is spawned
         local theta = (rHeading / 180.0) * 3.14
         local rPlaneSpawn = vector3(dropCoords.x, dropCoords.y, dropCoords.z) - vector3(math.cos(theta) * planeSpawnDistance, math.sin(theta) * planeSpawnDistance, -500.0) -- the plane is spawned at
 
