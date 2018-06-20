@@ -51,20 +51,20 @@ AddEventHandler("crateDrop", function(weapon, ammo, roofCheck, planeSpawnDistanc
             -- print("DISTANCE BETWEEN DROP AND IMPACT COORDS: " ..  #(vector3(dropCoords.x, dropCoords.y, dropCoords.z) - vector3(impactCoords)))
             if hit == 0 or (hit == 1 and #(vector3(dropCoords.x, dropCoords.y, dropCoords.z) - vector3(impactCoords)) < 10.0) then -- ± 10 units
                 -- print("ROOFCHECK: success")
-                DropCrate(weapon, ammo, planeSpawnDistance, dropCoords)
+                CrateDrop(weapon, ammo, planeSpawnDistance, dropCoords)
             else
                 -- print("ROOFCHECK: fail")
                 return
             end
         else
             -- print("ROOFCHECK: false")
-            DropCrate(weapon, ammo, planeSpawnDistance, dropCoords)
+            CrateDrop(weapon, ammo, planeSpawnDistance, dropCoords)
         end
 
     end)
 end)
 
-function DropCrate(weapon, ammo, planeSpawnDistance, dropCoords)
+function CrateDrop(weapon, ammo, planeSpawnDistance, dropCoords)
     Citizen.CreateThread(function()
 
         for i = 1, #requiredModels do
