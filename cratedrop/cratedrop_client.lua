@@ -9,6 +9,16 @@ local validParachutes = {
     ["gr_prop_gr_para_s_01"] = true, ["xm_prop_x17_para_sp_s"] = true, -- orange parachute
 }
 
+local parachuteTypes = {
+    ["white"] = "p_parachute1_mp_dec",
+    ["yellow"] = "prop_v_parachute",
+    ["orange"] = "gr_prop_gr_para_s_01",
+    ["rainbow"] = "p_parachute1_mp_s",
+    ["colorful"] = "p_parachute1_s",
+    ["cargo"] = "p_cargo_chute_s",
+    ["securoserv"] = "sr_prop_specraces_para_s",
+}
+
 RegisterCommand("cratedrop", function(playerServerID, args, rawString)
     local playerCoords = GetOffsetFromEntityInWorldCoords(PlayerPedId(), 0.0, 10.0, 0.0) -- ISN'T THIS A TABLE ALREADY?
     TriggerEvent("crateDrop", args[1], tonumber(args[2]), args[3] or false, args[4] or 400.0, {["x"] = playerCoords.x, ["y"] = playerCoords.y, ["z"] = playerCoords.z}, parachuteType, parachuteColor)
