@@ -76,20 +76,20 @@ AddEventHandler("crateDrop", function(weapon, ammo, roofCheck, planeSpawnDistanc
             print("DISTANCE BETWEEN DROP AND IMPACT COORDS: " ..  #(vector3(dropCoords.x, dropCoords.y, dropCoords.z) - vector3(impactCoords)))
             if hit == 0 or (hit == 1 and #(vector3(dropCoords.x, dropCoords.y, dropCoords.z) - vector3(impactCoords)) < 10.0) then -- ± 10 units
                 print("ROOFCHECK: success")
-                CrateDrop(weapon, ammo, planeSpawnDistance, dropCoords, parachuteType)
+                CrateDrop(weapon, ammo, planeSpawnDistance, dropCoords, parachuteModel)
             else
                 print("ROOFCHECK: fail")
                 return
             end
         else
             print("ROOFCHECK: false")
-            CrateDrop(weapon, ammo, planeSpawnDistance, dropCoords, parachuteType)
+            CrateDrop(weapon, ammo, planeSpawnDistance, dropCoords, parachuteModel)
         end
 
     end)
 end)
 
-function CrateDrop(weapon, ammo, planeSpawnDistance, dropCoords, parachuteType, parachuteColor)
+function CrateDrop(weapon, ammo, planeSpawnDistance, dropCoords, parachuteModel)
     Citizen.CreateThread(function()
 
         requiredModels = {parachuteType, "ex_prop_adv_case_sm", "cuban800", "s_m_m_pilot_02", "prop_box_wood02a_pu"} -- parachute, pickup case, plane, pilot, crate
