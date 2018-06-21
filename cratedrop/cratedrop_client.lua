@@ -21,12 +21,12 @@ local parachuteTypes = {
 
 RegisterCommand("cratedrop", function(playerServerID, args, rawString)
     local playerCoords = GetOffsetFromEntityInWorldCoords(PlayerPedId(), 0.0, 10.0, 0.0) -- ISN'T THIS A TABLE ALREADY?
-    TriggerEvent("crateDrop", args[1], tonumber(args[2]), args[3] or false, args[4] or 400.0, {["x"] = playerCoords.x, ["y"] = playerCoords.y, ["z"] = playerCoords.z}, parachuteType, parachuteColor)
+    TriggerEvent("crateDrop", args[1], tonumber(args[2]), args[3] or false, args[4] or 400.0, {["x"] = playerCoords.x, ["y"] = playerCoords.y, ["z"] = playerCoords.z}, parachuteType)
 end, false)
 
 RegisterNetEvent("crateDrop")
 
-AddEventHandler("crateDrop", function(weapon, ammo, roofCheck, planeSpawnDistance, dropCoords, parachuteType, parachuteColor) -- all of the error checking is done here before passing the parameters to the function itself
+AddEventHandler("crateDrop", function(weapon, ammo, roofCheck, planeSpawnDistance, dropCoords, parachuteType) -- all of the error checking is done here before passing the parameters to the function itself
     Citizen.CreateThread(function()
 
         if IsWeaponValid(GetHashKey(weapon)) then -- only supports weapon pickups for now, use the function directly to bypass this
@@ -67,13 +67,6 @@ AddEventHandler("crateDrop", function(weapon, ammo, roofCheck, planeSpawnDistanc
             print("PARACHUTE: model correct")
         end
 
-        if not parachuteColor and not tonumber(parachuteColor) then
-            parachuteColor = 1
-            print("PARACHUTE: color invalid, defaulting to 1")
-        else
-            print("PARACHUTE: color might be correct")
-        end
-
         if roofCheck and roofCheck ~= "false" then  -- if roofCheck is not false then a check will be performed if a plane can drop a crate to the specified location before actually spawning a plane, if it can't, function won't be called
             print("ROOFCHECK: true")
             local ray = StartShapeTestRay(vector3(dropCoords.x, dropCoords.y, dropCoords.z) + vector3(0.0, 0.0, 500.0), vector3(dropCoords.x, dropCoords.y, dropCoords.z), -1, -1, 0)
@@ -83,14 +76,14 @@ AddEventHandler("crateDrop", function(weapon, ammo, roofCheck, planeSpawnDistanc
             print("DISTANCE BETWEEN DROP AND IMPACT COORDS: " ..  #(vector3(dropCoords.x, dropCoords.y, dropCoords.z) - vector3(impactCoords)))
             if hit == 0 or (hit == 1 and #(vector3(dropCoords.x, dropCoords.y, dropCoords.z) - vector3(impactCoords)) < 10.0) then -- ± 10 units
                 print("ROOFCHECK: success")
-                CrateDrop(weapon, ammo, planeSpawnDistance, dropCoords, parachuteType, parachuteColor)
+                CrateDrop(weapon, ammo, planeSpawnDistance, dropCoords, parachuteType)
             else
                 print("ROOFCHECK: fail")
                 return
             end
         else
             print("ROOFCHECK: false")
-            CrateDrop(weapon, ammo, planeSpawnDistance, dropCoords, parachuteType, parachuteColor)
+            CrateDrop(weapon, ammo, planeSpawnDistance, dropCoords, parachuteType)
         end
 
     end)
@@ -177,7 +170,6 @@ function CrateDrop(weapon, ammo, planeSpawnDistance, dropCoords, parachuteType, 
         SetEntityVelocity(crate, 0.0, 0.0, -0.2) -- I think this makes the crate drop down, not sure if it's needed as many times in the script as I'm using
 
         parachute = CreateObject(GetHashKey(parachuteType), crateSpawn, true, true, true) -- create the parachute for the crate, location isn't too important as it'll be later attached properly
-        SetObjectTextureVariant(parachute, parachuteColor)
         SetEntityLodDist(parachute, 1000)
         SetEntityVelocity(parachute, 0.0, 0.0, -0.2)
 
