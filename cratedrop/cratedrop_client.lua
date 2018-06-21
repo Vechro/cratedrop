@@ -1,6 +1,7 @@
 local pilot, aircraft, parachute, crate, pickup, blip, soundID
+--[[
 local validParachutes = {
-    ["prop_v_parachute"] = true, -- yellow parachute with blue V and white triangle inside it
+    ["prop_v_parachute"] = true, -- yellow parachute with a white triangle on it and a blue V surrounding it
     ["p_parachute1_mp_dec"] = true, ["p_parachute1_sp_dec"] = true, -- white parachute
     ["p_parachute1_mp_s"] = true, ["p_parachute1_sp_s"] = true, ["sr_prop_specraces_para_s_01"] = true, ["lts_p_para_pilot2_sp_s"] = true, ["pil_p_para_pilot_sp_s"] = true, -- rainbow parachute
     ["p_parachute1_s"] = true, -- random colors in no specific order parachute
@@ -8,7 +9,7 @@ local validParachutes = {
     ["sr_prop_specraces_para_s"] = true, -- black parachute with securoserv logo
     ["gr_prop_gr_para_s_01"] = true, ["xm_prop_x17_para_sp_s"] = true, -- orange parachute
 }
-
+]]
 local parachuteTypes = {
     ["white"] = "p_parachute1_mp_dec",
     ["yellow"] = "prop_v_parachute",
@@ -60,11 +61,12 @@ AddEventHandler("crateDrop", function(weapon, ammo, roofCheck, planeSpawnDistanc
             print("DROP COORDS: fail, defaulting to X = 0; Y = 0")
         end
 
-        if not parachuteType or not validParachutes[parachuteType] then
-            parachuteType = "p_cargo_chute_s"
-            print("PARACHUTE: model invalid, defaulting to p_cargo_chute_s")
+        if parachuteTypes[parachuteType] then -- only supports the simple names like white or securoservm if you want your own model name then call the function directly
+            parachuteModel = parachuteTypes[parachuteType]
+            print("PARACHUTE: type correct")
         else
-            print("PARACHUTE: model correct")
+            parachuteModel = "p_cargo_chute_s"
+            print("PARACHUTE: type invalid, defaulting to p_cargo_chute_s")
         end
 
         if roofCheck and roofCheck ~= "false" then  -- if roofCheck is not false then a check will be performed if a plane can drop a crate to the specified location before actually spawning a plane, if it can't, function won't be called
@@ -92,7 +94,7 @@ end)
 function CrateDrop(weapon, ammo, planeSpawnDistance, dropCoords, parachuteModel)
     Citizen.CreateThread(function()
 
-        requiredModels = {parachuteType, "ex_prop_adv_case_sm", "cuban800", "s_m_m_pilot_02", "prop_box_wood02a_pu"} -- parachute, pickup case, plane, pilot, crate
+        requiredModels = {parachuteModel, "ex_prop_adv_case_sm", "cuban800", "s_m_m_pilot_02", "prop_box_wood02a_pu"} -- parachute, pickup case, plane, pilot, crate
 
         for i = 1, #requiredModels do
             RequestModel(GetHashKey(requiredModels[i]))
@@ -169,7 +171,7 @@ function CrateDrop(weapon, ammo, planeSpawnDistance, dropCoords, parachuteModel)
         SetDamping(crate, 2, 0.1) -- no idea but Rockstar uses it
         SetEntityVelocity(crate, 0.0, 0.0, -0.2) -- I think this makes the crate drop down, not sure if it's needed as many times in the script as I'm using
 
-        parachute = CreateObject(GetHashKey(parachuteType), crateSpawn, true, true, true) -- create the parachute for the crate, location isn't too important as it'll be later attached properly
+        parachute = CreateObject(GetHashKey(parachuteModel), crateSpawn, true, true, true) -- create the parachute for the crate, location isn't too important as it'll be later attached properly
         SetEntityLodDist(parachute, 1000)
         SetEntityVelocity(parachute, 0.0, 0.0, -0.2)
 
