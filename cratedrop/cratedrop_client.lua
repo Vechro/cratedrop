@@ -1,14 +1,12 @@
 local pilot, aircraft, parachute, crate, pickup, blip, soundID
-local requiredModels = {"p_cargo_chute_s", "ex_prop_adv_case_sm", "cuban800", "s_m_m_pilot_02", "prop_box_wood02a_pu"} -- parachute, pickup case, plane, pilot, crate
 local validParachutes = {
-    "prop_v_parachute", -- yellow parachute with blue V and white triangle inside it
-    "p_parachute1_mp_dec", "p_parachute1_sp_dec", -- white parachute
-    "p_parachute1_mp_s", "p_parachute1_sp_s", "sr_prop_specraces_para_s_01", "lts_p_para_pilot2_sp_s", -- rainbow parachute
-    "p_parachute1_s", -- random colors in no specific order parachute
-    "p_cargo_chute_s", -- dark green round cargo chute
-    "sr_prop_specraces_para_s", -- black parachute with securoserv logo
-    "gr_prop_gr_para_s_01", "xm_prop_x17_para_sp_s", -- orange parachute
-    "v_res_fa_umbrella", -- fuck it, an umbrella
+    ["prop_v_parachute"] = true, -- yellow parachute with blue V and white triangle inside it
+    ["p_parachute1_mp_dec"] = true, ["p_parachute1_sp_dec"] = true, -- white parachute
+    ["p_parachute1_mp_s"] = true, ["p_parachute1_sp_s"] = true, ["sr_prop_specraces_para_s_01"] = true, ["lts_p_para_pilot2_sp_s"] = true, ["pil_p_para_pilot_sp_s"] = true, -- rainbow parachute
+    ["p_parachute1_s"] = true, -- random colors in no specific order parachute
+    ["p_cargo_chute_s"] = true, -- dark green round cargo chute
+    ["sr_prop_specraces_para_s"] = true, -- black parachute with securoserv logo
+    ["gr_prop_gr_para_s_01"] = true, ["xm_prop_x17_para_sp_s"] = true, -- orange parachute
 }
 
 RegisterCommand("cratedrop", function(playerServerID, args, rawString)
@@ -23,18 +21,18 @@ AddEventHandler("crateDrop", function(weapon, ammo, roofCheck, planeSpawnDistanc
 
         if IsWeaponValid(GetHashKey(weapon)) then -- only supports weapon pickups for now, use the function directly to bypass this
             weapon = "pickup_" .. weapon
-            -- print("WEAPON VALIDITY: true, after concatenating 'pickup_'")
+            print("WEAPON VALIDITY: true, after concatenating 'pickup_'")
         elseif IsWeaponValid(GetHashKey("weapon_" .. weapon)) then
             weapon = "pickup_weapon_" .. weapon
-            -- print("WEAPON VALIDITY: true, after concatenating 'pickup_weapon_'")
+            print("WEAPON VALIDITY: true, after concatenating 'pickup_weapon_'")
         elseif IsWeaponValid(GetHashKey(weapon:sub(8))) then
-            -- print("WEAPON VALIDITY: true")
+            print("WEAPON VALIDITY: true")
         else
-            -- print("WEAPON VALIDITY: false")
+            print("WEAPON VALIDITY: false")
             return
         end
 
-        -- print("WEAPON: " .. string.lower(weapon))
+        print("WEAPON: " .. string.lower(weapon))
 
         local ammo = (ammo and tonumber(ammo)) or 250
         if ammo > 9999 then
@@ -43,13 +41,13 @@ AddEventHandler("crateDrop", function(weapon, ammo, roofCheck, planeSpawnDistanc
             ammo = -1
         end
 
-        -- print("AMMO: " .. ammo)
+        print("AMMO: " .. ammo)
 
         if dropCoords.x and dropCoords.y and dropCoords.z and tonumber(dropCoords.x) and tonumber(dropCoords.y) and tonumber(dropCoords.z) then
-            -- print(("DROP COORDS: success, X = %.4f; Y = %.4f; Z = %.4f"):format(dropCoords.x, dropCoords.y, dropCoords.z))
+            print(("DROP COORDS: success, X = %.4f; Y = %.4f; Z = %.4f"):format(dropCoords.x, dropCoords.y, dropCoords.z))
         else
             dropCoords = {0.0, 0.0, 72.0}
-            -- print("DROP COORDS: fail, defaulting to X = 0; Y = 0")
+            print("DROP COORDS: fail, defaulting to X = 0; Y = 0")
         end
 
         if not parachuteType or not validParachutes[parachuteType] then
@@ -65,24 +63,23 @@ AddEventHandler("crateDrop", function(weapon, ammo, roofCheck, planeSpawnDistanc
         else
             print("PARACHUTE: color might be correct")
         end
-        
-        -- SetObjectTextureVariant
+
         if roofCheck and roofCheck ~= "false" then  -- if roofCheck is not false then a check will be performed if a plane can drop a crate to the specified location before actually spawning a plane, if it can't, function won't be called
-            -- print("ROOFCHECK: true")
+            print("ROOFCHECK: true")
             local ray = StartShapeTestRay(vector3(dropCoords.x, dropCoords.y, dropCoords.z) + vector3(0.0, 0.0, 500.0), vector3(dropCoords.x, dropCoords.y, dropCoords.z), -1, -1, 0)
             local _, hit, impactCoords = GetShapeTestResult(ray)
-            -- print("HIT: " .. hit)
-            -- print(("IMPACT COORDS: X = %.4f; Y = %.4f; Z = %.4f"):format(impactCoords.x, impactCoords.y, impactCoords.z))
-            -- print("DISTANCE BETWEEN DROP AND IMPACT COORDS: " ..  #(vector3(dropCoords.x, dropCoords.y, dropCoords.z) - vector3(impactCoords)))
+            print("HIT: " .. hit)
+            print(("IMPACT COORDS: X = %.4f; Y = %.4f; Z = %.4f"):format(impactCoords.x, impactCoords.y, impactCoords.z))
+            print("DISTANCE BETWEEN DROP AND IMPACT COORDS: " ..  #(vector3(dropCoords.x, dropCoords.y, dropCoords.z) - vector3(impactCoords)))
             if hit == 0 or (hit == 1 and #(vector3(dropCoords.x, dropCoords.y, dropCoords.z) - vector3(impactCoords)) < 10.0) then -- ± 10 units
-                -- print("ROOFCHECK: success")
+                print("ROOFCHECK: success")
                 CrateDrop(weapon, ammo, planeSpawnDistance, dropCoords, parachuteType, parachuteColor)
             else
-                -- print("ROOFCHECK: fail")
+                print("ROOFCHECK: fail")
                 return
             end
         else
-            -- print("ROOFCHECK: false")
+            print("ROOFCHECK: false")
             CrateDrop(weapon, ammo, planeSpawnDistance, dropCoords, parachuteType, parachuteColor)
         end
 
@@ -91,6 +88,8 @@ end)
 
 function CrateDrop(weapon, ammo, planeSpawnDistance, dropCoords, parachuteType, parachuteColor)
     Citizen.CreateThread(function()
+
+        requiredModels = {parachuteType, "ex_prop_adv_case_sm", "cuban800", "s_m_m_pilot_02", "prop_box_wood02a_pu"} -- parachute, pickup case, plane, pilot, crate
 
         for i = 1, #requiredModels do
             RequestModel(GetHashKey(requiredModels[i]))
@@ -116,8 +115,8 @@ function CrateDrop(weapon, ammo, planeSpawnDistance, dropCoords, parachuteType, 
         local theta = (rHeading / 180.0) * 3.14
         local rPlaneSpawn = vector3(dropCoords.x, dropCoords.y, dropCoords.z) - vector3(math.cos(theta) * planeSpawnDistance, math.sin(theta) * planeSpawnDistance, -500.0) -- the plane is spawned at
 
-        -- print(("PLANE COORDS: X = %.4f; Y = %.4f; Z = %.4f"):format(rPlaneSpawn.x, rPlaneSpawn.y, rPlaneSpawn.z))
-        -- print("PLANE SPAWN DISTANCE: " .. #(vector2(rPlaneSpawn.x, rPlaneSpawn.y) - vector2(dropCoords.x, dropCoords.y)))
+        print(("PLANE COORDS: X = %.4f; Y = %.4f; Z = %.4f"):format(rPlaneSpawn.x, rPlaneSpawn.y, rPlaneSpawn.z))
+        print("PLANE SPAWN DISTANCE: " .. #(vector2(rPlaneSpawn.x, rPlaneSpawn.y) - vector2(dropCoords.x, dropCoords.y)))
 
         local dx = dropCoords.x - rPlaneSpawn.x
         local dy = dropCoords.y - rPlaneSpawn.y
@@ -167,7 +166,8 @@ function CrateDrop(weapon, ammo, planeSpawnDistance, dropCoords, parachuteType, 
         SetDamping(crate, 2, 0.1) -- no idea but Rockstar uses it
         SetEntityVelocity(crate, 0.0, 0.0, -0.2) -- I think this makes the crate drop down, not sure if it's needed as many times in the script as I'm using
 
-        parachute = CreateObject(GetHashKey("p_cargo_chute_s"), crateSpawn, true, true, true) -- create the parachute for the crate, location isn't too important as it'll be later attached properly
+        parachute = CreateObject(GetHashKey(parachuteType), crateSpawn, true, true, true) -- create the parachute for the crate, location isn't too important as it'll be later attached properly
+        SetObjectTextureVariant(parachute, parachuteColor)
         SetEntityLodDist(parachute, 1000)
         SetEntityVelocity(parachute, 0.0, 0.0, -0.2)
 
@@ -202,7 +202,7 @@ function CrateDrop(weapon, ammo, planeSpawnDistance, dropCoords, parachuteType, 
         local parachuteCoords = vector3(GetEntityCoords(parachute)) -- we get the parachute dropCoords so we know where to drop the flare
         ShootSingleBulletBetweenCoords(parachuteCoords, parachuteCoords - vector3(0.0001, 0.0001, 0.0001), 0, false, GetHashKey("weapon_flare"), 0, true, false, -1.0) -- flare needs to be dropped with dropCoords like that, otherwise it remains static and won't remove itself later
         DetachEntity(parachute, true, true)
-        -- SetEntityCollision(parachute, false, true) -- pointless right now but would be cool if animations would work and you'll be able to walk through the parachute while it's disappearing
+        -- SetEntityCollision(parachute, false, true) pointless right now but would be cool if animations would work and you'll be able to walk through the parachute while it's disappearing
         -- PlayEntityAnim(parachute, "P_cargo_chute_S_crumple", "P_cargo_chute_S", 1000.0, false, false, false, 0, 0)
         DeleteEntity(parachute)
         DetachEntity(pickup) -- will despawn on its own
@@ -239,7 +239,7 @@ end
 AddEventHandler("onResourceStop", function(resource)
     if resource == GetCurrentResourceName() then
 
-        -- print("RESOURCE: stopped")
+        print("RESOURCE: stopped")
 
         SetEntityAsMissionEntity(pilot, false, true)
         DeleteEntity(pilot)
