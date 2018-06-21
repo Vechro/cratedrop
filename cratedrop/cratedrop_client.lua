@@ -1,5 +1,15 @@
 local pilot, aircraft, parachute, crate, pickup, blip, soundID
 local requiredModels = {"p_cargo_chute_s", "ex_prop_adv_case_sm", "cuban800", "s_m_m_pilot_02", "prop_box_wood02a_pu"} -- parachute, pickup case, plane, pilot, crate
+local validParachutes = {
+    "prop_v_parachute", -- yellow parachute with blue V and white triangle inside it
+    "p_parachute1_mp_dec", "p_parachute1_sp_dec", -- white parachute
+    "p_parachute1_mp_s", "p_parachute1_sp_s", "sr_prop_specraces_para_s_01", "lts_p_para_pilot2_sp_s", -- rainbow parachute
+    "p_parachute1_s", -- random colors in no specific order parachute
+    "p_cargo_chute_s", -- dark green round cargo chute
+    "sr_prop_specraces_para_s", -- black parachute with securoserv logo
+    "gr_prop_gr_para_s_01", "xm_prop_x17_para_sp_s", -- orange parachute
+    "v_res_fa_umbrella", -- fuck it, an umbrella
+}
 
 RegisterCommand("cratedrop", function(playerServerID, args, rawString)
     local playerCoords = GetOffsetFromEntityInWorldCoords(PlayerPedId(), 0.0, 10.0, 0.0) -- ISN'T THIS A TABLE ALREADY?
@@ -8,7 +18,7 @@ end, false)
 
 RegisterNetEvent("crateDrop")
 
-AddEventHandler("crateDrop", function(weapon, ammo, roofCheck, planeSpawnDistance, dropCoords) -- all of the error checking is done here before passing the parameters to the function itself
+AddEventHandler("crateDrop", function(weapon, ammo, roofCheck, planeSpawnDistance, dropCoords, parachuteType) -- all of the error checking is done here before passing the parameters to the function itself
     Citizen.CreateThread(function()
 
         if IsWeaponValid(GetHashKey(weapon)) then -- only supports weapon pickups for now, use the function directly to bypass this
@@ -64,7 +74,7 @@ AddEventHandler("crateDrop", function(weapon, ammo, roofCheck, planeSpawnDistanc
     end)
 end)
 
-function CrateDrop(weapon, ammo, planeSpawnDistance, dropCoords)
+function CrateDrop(weapon, ammo, planeSpawnDistance, dropCoords, parachuteType)
     Citizen.CreateThread(function()
 
         for i = 1, #requiredModels do
@@ -234,14 +244,3 @@ AddEventHandler("onResourceStop", function(resource)
 
     end
 end)
-
---[[
-prop_v_parachute (yellow parachute with blue V and white triangle inside it)
-p_parachute1_mp_dec, p_parachute1_sp_dec (white parachute)
-p_parachute1_mp_s, p_parachute1_sp_s, sr_prop_specraces_para_s_01, lts_p_para_pilot2_sp_s (rainbow parachute)
-p_parachute1_s (random color order parachute)
-p_cargo_chute_s (green round cargo chute)
-sr_prop_specraces_para_s (SecuroServ black parachute)
-gr_prop_gr_para_s_01, xm_prop_x17_para_sp_s (orange parachute)
-v_res_fa_umbrella (umbrella)
-]]
