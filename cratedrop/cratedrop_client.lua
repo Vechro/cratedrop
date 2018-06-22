@@ -24,7 +24,7 @@ local parachuteTypes = {
 -- print("MASS: " .. mass)
 RegisterCommand("cratedrop", function(playerServerID, args, rawString)
     local playerCoords = GetOffsetFromEntityInWorldCoords(PlayerPedId(), 0.0, 10.0, 0.0) -- ISN'T THIS A TABLE ALREADY?
-    TriggerEvent("crateDrop", args[1], tonumber(args[2]), args[3] or false, args[4] or 400.0, {["x"] = playerCoords.x, ["y"] = playerCoords.y, ["z"] = playerCoords.z}, args[5])
+    TriggerEvent("crateDrop", args[1], tonumber(args[2]), args[3] or false, args[4] or 400.0, {["x"] = playerCoords.x, ["y"] = playerCoords.y, ["z"] = playerCoords.z}, "p_parachute1_sp_dec")
 end, false)
 
 RegisterNetEvent("crateDrop")
@@ -64,7 +64,7 @@ AddEventHandler("crateDrop", function(weapon, ammo, roofCheck, planeSpawnDistanc
         end
 
         if parachuteTypes[parachuteType] or validParachutes[parachuteType] then -- needs to be tested, should accept simplified parachute names but also exact models
-            parachuteModel = parachuteTypes[parachuteType] or validParachutes[parachuteType]
+            parachuteModel = parachuteTypes[parachuteType] or parachuteType
             print("PARACHUTE: type correct")
         else
             parachuteModel = "p_cargo_chute_s"
@@ -198,10 +198,10 @@ function CrateDrop(weapon, ammo, planeSpawnDistance, dropCoords, parachuteModel)
         -- local crateBeacon = StartParticleFxLoopedOnEntity_2("scr_crate_drop_beacon", pickup, 0.0, 0.0, 0.2, 0.0, 0.0, 0.0, 1065353216, 0, 0, 0, 1065353216, 1065353216, 1065353216, 0)--1.0, false, false, false)
         -- SetParticleFxLoopedColour(crateBeacon, 0.8, 0.18, 0.19, false)
 
-        if parachuteModel == "p_cargo_chute_s" then
+        if parachuteModel:lower() == "p_cargo_chute_s" then
             AttachEntityToEntity(parachute, pickup, 0, 0.0, 0.0, 0.1, 0.0, 0.0, 0.0, false, false, false, false, 2, true) -- attach the crate to the pickup
         else
-            AttachEntityToEntity(parachute, pickup, 0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, false, false, false, false, 2, true) -- attach the crate to the pickup, ADJUST Z COORD
+            AttachEntityToEntity(parachute, pickup, 0, 0.0, 0.0, 3.0, 0.0, 0.0, 0.0, false, false, false, false, 2, true) -- attach the crate to the pickup, ADJUST Z COORD
         end
         AttachEntityToEntity(pickup, crate, 0, 0.0, 0.0, 0.3, 0.0, 0.0, 0.0, false, false, true, false, 2, true) -- attach the pickup to the crate, doing it in any other order makes the crate drop spazz out
 
