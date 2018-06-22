@@ -5,7 +5,7 @@ local validParachutes = {
     ["prop_v_parachute"] = true, -- yellow parachute with a white triangle on it and a blue V surrounding it
     ["p_parachute1_mp_dec"] = true, ["p_parachute1_sp_dec"] = true, -- white parachute
     ["p_parachute1_mp_s"] = true, ["p_parachute1_sp_s"] = true, ["sr_prop_specraces_para_s_01"] = true, ["lts_p_para_pilot2_sp_s"] = true, ["pil_p_para_pilot_sp_s"] = true, -- rainbow parachute
-    ["p_parachute1_s"] = true, -- random colors in no specific order parachute
+    ["p_parachute1_s"] = true, -- parachute with random colors in no specific order
     ["p_cargo_chute_s"] = true, -- dark green round cargo chute
     ["sr_prop_specraces_para_s"] = true, -- black parachute with securoserv logo
     ["gr_prop_gr_para_s_01"] = true, ["xm_prop_x17_para_sp_s"] = true, -- orange parachute
@@ -20,10 +20,11 @@ local parachuteTypes = {
     ["cargo"] = "p_cargo_chute_s",
     ["securoserv"] = "sr_prop_specraces_para_s",
 }
-
+-- local mass = GetVehicleHandlingFloat(vehicle, "CHandlingData", "fMass") -- awesome things to come
+-- print("MASS: " .. mass)
 RegisterCommand("cratedrop", function(playerServerID, args, rawString)
     local playerCoords = GetOffsetFromEntityInWorldCoords(PlayerPedId(), 0.0, 10.0, 0.0) -- ISN'T THIS A TABLE ALREADY?
-    TriggerEvent("crateDrop", args[1], tonumber(args[2]), args[3] or false, args[4] or 400.0, {["x"] = playerCoords.x, ["y"] = playerCoords.y, ["z"] = playerCoords.z}, parachuteType)
+    TriggerEvent("crateDrop", args[1], tonumber(args[2]), args[3] or false, args[4] or 400.0, {["x"] = playerCoords.x, ["y"] = playerCoords.y, ["z"] = playerCoords.z}, args[5])
 end, false)
 
 RegisterNetEvent("crateDrop")
