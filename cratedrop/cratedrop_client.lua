@@ -1,5 +1,5 @@
 local pilot, aircraft, parachute, crate, pickup, blip, soundID
---[[
+
 local validParachutes = {
     ["prop_v_parachute"] = true, -- yellow parachute with a white triangle on it and a blue V surrounding it
     ["p_parachute1_mp_dec"] = true, ["p_parachute1_sp_dec"] = true, -- white parachute
@@ -9,7 +9,7 @@ local validParachutes = {
     ["sr_prop_specraces_para_s"] = true, -- black parachute with securoserv logo
     ["gr_prop_gr_para_s_01"] = true, ["xm_prop_x17_para_sp_s"] = true, -- orange parachute
 }
-]]
+
 local parachuteTypes = {
     ["white"] = "p_parachute1_mp_dec",
     ["yellow"] = "prop_v_parachute",
@@ -61,8 +61,8 @@ AddEventHandler("crateDrop", function(weapon, ammo, roofCheck, planeSpawnDistanc
             print("DROP COORDS: fail, defaulting to X = 0; Y = 0")
         end
 
-        if parachuteTypes[parachuteType] then -- only supports the simple names like white or securoservm if you want your own model name then call the function directly
-            parachuteModel = parachuteTypes[parachuteType]
+        if parachuteTypes[parachuteType] or validParachutes[parachuteType] then -- needs to be tested, should accept simplified parachute names but also exact models
+            parachuteModel = parachuteTypes[parachuteType] or validParachutes[parachuteType]
             print("PARACHUTE: type correct")
         else
             parachuteModel = "p_cargo_chute_s"
@@ -196,7 +196,11 @@ function CrateDrop(weapon, ammo, planeSpawnDistance, dropCoords, parachuteModel)
         -- local crateBeacon = StartParticleFxLoopedOnEntity_2("scr_crate_drop_beacon", pickup, 0.0, 0.0, 0.2, 0.0, 0.0, 0.0, 1065353216, 0, 0, 0, 1065353216, 1065353216, 1065353216, 0)--1.0, false, false, false)
         -- SetParticleFxLoopedColour(crateBeacon, 0.8, 0.18, 0.19, false)
 
-        AttachEntityToEntity(parachute, pickup, 0, 0.0, 0.0, 0.1, 0.0, 0.0, 0.0, false, false, false, false, 2, true) -- attach the crate to the pickup
+        if parachuteModel == "p_cargo_chute_s" then
+            AttachEntityToEntity(parachute, pickup, 0, 0.0, 0.0, 0.1, 0.0, 0.0, 0.0, false, false, false, false, 2, true) -- attach the crate to the pickup
+        else
+            AttachEntityToEntity(parachute, pickup, 0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, false, false, false, false, 2, true) -- attach the crate to the pickup, ADJUST Z COORD
+        end
         AttachEntityToEntity(pickup, crate, 0, 0.0, 0.0, 0.3, 0.0, 0.0, 0.0, false, false, true, false, 2, true) -- attach the pickup to the crate, doing it in any other order makes the crate drop spazz out
 
         while HasObjectBeenBroken(crate) == false do -- wait till the crate gets broken (probably on impact), then continue with the script
