@@ -45,7 +45,7 @@ AddEventHandler("crateDrop", function(weapon, ammo, roofCheck, planeSpawnDistanc
             return
         end
 
-        print("WEAPON: " .. string.lower(weapon))
+        print("WEAPON: " .. weapon:lower())
 
         local ammo = (ammo and tonumber(ammo)) or 250
         if ammo > 9999 then
