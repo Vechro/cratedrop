@@ -1,4 +1,5 @@
 local pilot, aircraft, parachute, crate, pickup, blip, soundID
+local requiredModels = {}
 
 local validParachutes = {
     ["prop_v_parachute"] = true, -- yellow parachute with a white triangle on it and a blue V surrounding it
