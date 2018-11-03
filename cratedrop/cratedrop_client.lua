@@ -23,8 +23,8 @@ local parachuteTypes = {
 -- local mass = GetVehicleHandlingFloat(vehicle, "CHandlingData", "fMass") -- awesome things to come
 -- print("MASS: " .. mass)
 RegisterCommand("cratedrop", function(playerServerID, args, rawString)
-    local playerCoords = GetOffsetFromEntityInWorldCoords(PlayerPedId(), 0.0, 10.0, 0.0) -- ISN'T THIS A TABLE ALREADY?
-    TriggerEvent("crateDrop", args[1], tonumber(args[2]), args[3] or false, args[4] or 400.0, {["x"] = playerCoords.x, ["y"] = playerCoords.y, ["z"] = playerCoords.z}, "p_parachute1_sp_dec")
+    local playerCoords = GetOffsetFromEntityInWorldCoords(PlayerPedId(), 0.0, 10.0, 0.0)
+    TriggerEvent("crateDrop", args[1], tonumber(args[2]), args[3] or false, args[4] or 400.0, {["x"] = playerCoords.x, ["y"] = playerCoords.y, ["z"] = playerCoords.z}, args[5] or "p_parachute1_sp_dec")
 end, false)
 
 RegisterNetEvent("crateDrop")
@@ -63,13 +63,13 @@ AddEventHandler("crateDrop", function(weapon, ammo, roofCheck, planeSpawnDistanc
             print("DROP COORDS: fail, defaulting to X = 0; Y = 0")
         end
 
-        if parachuteTypes[parachuteType] or validParachutes[parachuteType] then -- needs to be tested, should accept simplified parachute names but also exact models
-            parachuteModel = parachuteTypes[parachuteType] or parachuteType
-            print("PARACHUTE: type correct")
-        else
+        --if parachuteTypes[parachuteType] or validParachutes[parachuteType] then
+        --    parachuteModel = parachuteTypes[parachuteType] or parachuteType
+        --    print("PARACHUTE: type correct")
+        --else
             parachuteModel = "p_cargo_chute_s"
             print("PARACHUTE: type invalid, defaulting to p_cargo_chute_s")
-        end
+        --end
 
         if roofCheck and roofCheck ~= "false" then  -- if roofCheck is not false then a check will be performed if a plane can drop a crate to the specified location before actually spawning a plane, if it can't, function won't be called
             print("ROOFCHECK: true")
@@ -156,7 +156,7 @@ function CrateDrop(weapon, ammo, planeSpawnDistance, dropCoords, parachuteModel)
             planeLocation = vector2(GetEntityCoords(aircraft).x, GetEntityCoords(aircraft).y) -- update plane coords for the loop
         end
 
-        if IsEntityDead(pilot) then -- I think this will end the script if the pilot dies, no idea how to return works
+        if IsEntityDead(pilot) then -- I think this will end the script if the pilot dies, no idea how return works
             print("PILOT: dead")
             do return end
         end
@@ -201,9 +201,12 @@ function CrateDrop(weapon, ammo, planeSpawnDistance, dropCoords, parachuteModel)
         if parachuteModel:lower() == "p_cargo_chute_s" then
             AttachEntityToEntity(parachute, pickup, 0, 0.0, 0.0, 0.1, 0.0, 0.0, 0.0, false, false, false, false, 2, true) -- attach the crate to the pickup
         else
-            AttachEntityToEntity(parachute, pickup, 0, 0.0, 0.0, 3.0, 0.0, 0.0, 0.0, false, false, false, false, 2, true) -- attach the crate to the pickup, ADJUST Z COORD
+            AttachEntityToEntity(parachute, pickup, 0, 0.0, 0.0, 3.0, 0.0, 0.0, 0.0, false, false, false, false, 2, true) -- attach the crate to the pickup
         end
+
         AttachEntityToEntity(pickup, crate, 0, 0.0, 0.0, 0.3, 0.0, 0.0, 0.0, false, false, true, false, 2, true) -- attach the pickup to the crate, doing it in any other order makes the crate drop spazz out
+
+        FreezeEntityPosition(crate, true)
 
         while HasObjectBeenBroken(crate) == false do -- wait till the crate gets broken (probably on impact), then continue with the script
             Wait(0)
@@ -216,7 +219,7 @@ function CrateDrop(weapon, ammo, planeSpawnDistance, dropCoords, parachuteModel)
         -- PlayEntityAnim(parachute, "P_cargo_chute_S_crumple", "P_cargo_chute_S", 1000.0, false, false, false, 0, 0)
         DeleteEntity(parachute)
         DetachEntity(pickup) -- will despawn on its own
-        SetBlipAlpha(blip, 255) -- make the blip fully visible
+        SetBlipAlpha(blip, 255)
 
         while DoesEntityExist(pickup) do -- wait till the pickup gets picked up, then the script can continue
             Wait(0)
