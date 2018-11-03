@@ -157,7 +157,7 @@ function crateDrop(weapon, ammo, planeSpawnDistance, dropCoords, parachuteModel)
         end
 
         TaskVehicleDriveToCoord(pilot, aircraft, 0.0, 0.0, 500.0, 60.0, 0, GetHashKey("cuban800"), 262144, -1.0, -1.0) -- disposing of the plane like Rockstar does, send it to 0; 0 coords with -1.0 stop range, so the plane won't be able to achieve its task
-        SetEntityAsNoLongerNeeded(pilot) 
+        SetEntityAsNoLongerNeeded(pilot)
         SetEntityAsNoLongerNeeded(aircraft)
 
         local crateSpawn = vector3(dropCoords.x, dropCoords.y, GetEntityCoords(aircraft).z - 5.0) -- crate will drop to the exact position as planned, not at the plane's current position
