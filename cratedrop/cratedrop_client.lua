@@ -11,26 +11,22 @@ local validParachutes = {
     ["gr_prop_gr_para_s_01"] = true, ["xm_prop_x17_para_sp_s"] = true, -- orange parachute
 }
 
-local parachuteTypes = {
-    ["white"] = "p_parachute1_mp_dec",
-    ["yellow"] = "prop_v_parachute",
-    ["orange"] = "gr_prop_gr_para_s_01",
-    ["rainbow"] = "p_parachute1_mp_s",
-    ["colorful"] = "p_parachute1_s",
-    ["cargo"] = "p_cargo_chute_s",
-    ["securoserv"] = "sr_prop_specraces_para_s",
-}
 -- local mass = GetVehicleHandlingFloat(vehicle, "CHandlingData", "fMass") -- awesome things to come
 -- print("MASS: " .. mass)
 RegisterCommand("cratedrop", function(playerServerID, args, rawString)
     local playerCoords = GetOffsetFromEntityInWorldCoords(PlayerPedId(), 0.0, 10.0, 0.0)
-    TriggerEvent("crateDrop", args[1], tonumber(args[2]), args[3] or false, args[4] or 400.0, {["x"] = playerCoords.x, ["y"] = playerCoords.y, ["z"] = playerCoords.z}, args[5] or "p_parachute1_sp_dec")
+    TriggerEvent("crateDrop", args[1], tonumber(args[2]), args[3] or false, args[4] or 400.0, {["x"] = playerCoords.x, ["y"] = playerCoords.y, ["z"] = playerCoords.z}, args[5])
 end, false)
 
 RegisterNetEvent("crateDrop")
 
-AddEventHandler("crateDrop", function(weapon, ammo, roofCheck, planeSpawnDistance, dropCoords, parachuteType) -- all of the error checking is done here before passing the parameters to the function itself
+AddEventHandler("crateDrop", function(weapon, ammo, roofCheck, planeSpawnDistance, dropCoords, parachuteModel) -- all of the error checking is done here before passing the parameters to the function itself
     Citizen.CreateThread(function()
+
+        if not weapon then
+            print("Error: NO WEAPON ARGUMENT")
+            return
+        end
 
         if IsWeaponValid(GetHashKey(weapon)) then -- only supports weapon pickups for now, use the function directly to bypass this
             weapon = "pickup_" .. weapon
@@ -63,13 +59,12 @@ AddEventHandler("crateDrop", function(weapon, ammo, roofCheck, planeSpawnDistanc
             print("DROP COORDS: fail, defaulting to X = 0; Y = 0")
         end
 
-        --if parachuteTypes[parachuteType] or validParachutes[parachuteType] then
-        --    parachuteModel = parachuteTypes[parachuteType] or parachuteType
-        --    print("PARACHUTE: type correct")
-        --else
+        if validParachutes[parachuteModel] then
+            print("PARACHUTE: model correct")
+        else
             parachuteModel = "p_cargo_chute_s"
-            print("PARACHUTE: type invalid, defaulting to p_cargo_chute_s")
-        --end
+            print("PARACHUTE: model invalid, defaulting to p_cargo_chute_s")
+        end
 
         if roofCheck and roofCheck ~= "false" then  -- if roofCheck is not false then a check will be performed if a plane can drop a crate to the specified location before actually spawning a plane, if it can't, function won't be called
             print("ROOFCHECK: true")
@@ -80,20 +75,20 @@ AddEventHandler("crateDrop", function(weapon, ammo, roofCheck, planeSpawnDistanc
             print("DISTANCE BETWEEN DROP AND IMPACT COORDS: " ..  #(vector3(dropCoords.x, dropCoords.y, dropCoords.z) - vector3(impactCoords)))
             if hit == 0 or (hit == 1 and #(vector3(dropCoords.x, dropCoords.y, dropCoords.z) - vector3(impactCoords)) < 10.0) then -- ± 10 units
                 print("ROOFCHECK: success")
-                CrateDrop(weapon, ammo, planeSpawnDistance, dropCoords, parachuteModel)
+                crateDrop(weapon, ammo, planeSpawnDistance, dropCoords, parachuteModel)
             else
                 print("ROOFCHECK: fail")
                 return
             end
         else
             print("ROOFCHECK: false")
-            CrateDrop(weapon, ammo, planeSpawnDistance, dropCoords, parachuteModel)
+            crateDrop(weapon, ammo, planeSpawnDistance, dropCoords, parachuteModel)
         end
 
     end)
 end)
 
-function CrateDrop(weapon, ammo, planeSpawnDistance, dropCoords, parachuteModel)
+function crateDrop(weapon, ammo, planeSpawnDistance, dropCoords, parachuteModel)
     Citizen.CreateThread(function()
 
         requiredModels = {parachuteModel, "ex_prop_adv_case_sm", "cuban800", "s_m_m_pilot_02", "prop_box_wood02a_pu"} -- parachute, pickup case, plane, pilot, crate
@@ -269,6 +264,5 @@ AddEventHandler("onResourceStop", function(resource)
             Wait(0)
             SetModelAsNoLongerNeeded(GetHashKey(requiredModels[i]))
         end
-
     end
 end)
