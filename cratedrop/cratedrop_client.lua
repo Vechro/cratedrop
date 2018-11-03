@@ -206,7 +206,7 @@ function CrateDrop(weapon, ammo, planeSpawnDistance, dropCoords, parachuteModel)
 
         AttachEntityToEntity(pickup, crate, 0, 0.0, 0.0, 0.3, 0.0, 0.0, 0.0, false, false, true, false, 2, true) -- attach the pickup to the crate, doing it in any other order makes the crate drop spazz out
 
-        FreezeEntityPosition(crate, true)
+        FreezeEntityPosition(crate, false)
 
         while HasObjectBeenBroken(crate) == false do -- wait till the crate gets broken (probably on impact), then continue with the script
             Wait(0)
