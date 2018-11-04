@@ -1,3 +1,4 @@
+local tasksWrapper = exports["taskswrapper-fivem"]
 local pilot, aircraft, parachute, crate, pickup, blip, soundID
 local requiredModels = {}
 
@@ -142,7 +143,9 @@ function crateDrop(weapon, ammo, planeSpawnDistance, dropCoords, parachuteModel)
         SetPedKeepTask(pilot, true)
         SetPlaneMinHeightAboveTerrain(aircraft, 50) -- the plane shouldn't dip below the defined altitude
 
-        TaskVehicleDriveToCoord(pilot, aircraft, vector3(dropCoords.x, dropCoords.y, dropCoords.z) + vector3(0.0, 0.0, 500.0), 60.0, 0, GetHashKey("cuban800"), 262144, 15.0, -1.0) -- to the dropsite, could be replaced with a task sequence
+        --TaskVehicleDriveToCoord(pilot, aircraft, vector3(dropCoords.x, dropCoords.y, dropCoords.z) + vector3(0.0, 0.0, 500.0), 60.0, 0, GetHashKey("cuban800"), 262144, 15.0, -1.0) -- to the dropsite, could be replaced with a task sequence
+        local aboveDropCoords = vector3(dropCoords.x, dropCoords.y, dropCoords.z) + vector3(0.0, 0.0, 500.0) -- needed because msgPack can't serialize vectors (for the export call)
+        tasksWrapper:SetPedTask(pilot, TASK_VEHICLE_DRIVE_TO_COORD, aircraft, aboveDropCoords.x, aboveDropCoords.y, aboveDropCoords.z, 60.0, 0, GetHashKey("cuban800"), 262144, 15.0, -1.0)
 
         local droparea = vector2(dropCoords.x, dropCoords.y)
         local planeLocation = vector2(GetEntityCoords(aircraft).x, GetEntityCoords(aircraft).y)
@@ -156,7 +159,9 @@ function crateDrop(weapon, ammo, planeSpawnDistance, dropCoords, parachuteModel)
             do return end
         end
 
-        TaskVehicleDriveToCoord(pilot, aircraft, 0.0, 0.0, 500.0, 60.0, 0, GetHashKey("cuban800"), 262144, -1.0, -1.0) -- disposing of the plane like Rockstar does, send it to 0; 0 coords with -1.0 stop range, so the plane won't be able to achieve its task
+        --TaskVehicleDriveToCoord(pilot, aircraft, 0.0, 0.0, 500.0, 60.0, 0, GetHashKey("cuban800"), 262144, -1.0, -1.0) -- disposing of the plane like Rockstar does, send it to 0; 0 coords with -1.0 stop range, so the plane won't be able to achieve its task
+        tasksWrapper:SetPedTask(pilot, TASK_VEHICLE_DRIVE_TO_COORD, aircraft, 0.0, 0.0, 500.0, 60.0, 0, GetHashKey("cuban800"), 262144, -1.0, -1.0)
+        
         SetEntityAsNoLongerNeeded(pilot)
         SetEntityAsNoLongerNeeded(aircraft)
 
